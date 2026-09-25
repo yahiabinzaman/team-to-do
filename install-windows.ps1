@@ -1,7 +1,6 @@
 # Team To do - Windows 1-Line Universal PowerShell Installer
 # Requires NO pre-installed Git or Node.js - Handles everything automatically!
 
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue
 $ErrorActionPreference = "Continue"
 
 Write-Host "========================================================" -ForegroundColor Cyan
@@ -75,9 +74,9 @@ Remove-Item $ExtractTemp -Recurse -Force -ErrorAction SilentlyContinue
 Set-Location $InstallDir
 Write-Host "[OK] Files installed in $InstallDir" -ForegroundColor Green
 
-# --- 3. Install NPM Dependencies (using cmd.exe to avoid PS execution policy restrictions) ---
-Write-Host "[3/4] Installing application dependencies..." -ForegroundColor Cyan
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm install --no-audit --no-fund" -WorkingDirectory $InstallDir -Wait -NoNewWindow
+# --- 3. Install NPM Dependencies (using cmd.exe to prevent any PowerShell ExecutionPolicy issue) ---
+Write-Host "[3/4] Installing application dependencies (this takes ~30 seconds)..." -ForegroundColor Cyan
+& cmd.exe /c "call npm install --no-audit --no-fund"
 
 # --- 4. Configure Windows Startup & Launch ---
 Write-Host "[4/4] Setting up Windows Auto-start and launching widget..." -ForegroundColor Cyan
@@ -92,7 +91,7 @@ WshShell.Run "cmd /c start-windows.bat", 0, False
 "@
 Set-Content -Path $vbsFile -Value $vbsContent -Encoding ASCII
 
-# Start now
+# Start the widget now
 Start-Process -FilePath "cmd.exe" -ArgumentList "/c start-windows.bat" -WorkingDirectory $InstallDir -WindowStyle Hidden
 
 Write-Host "========================================================" -ForegroundColor Green
