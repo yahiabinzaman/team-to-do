@@ -241,7 +241,6 @@ function renderTasksView() {
           <div class="reminder-title">${escapeHtml(task.title)}</div>
           <div class="reminder-meta-text">
             <span class="task-assignee-highlight" style="--emp-color:${empColor}">
-              <span class="task-assignee-dot" style="background:${empColor};"></span>
               ${escapeHtml(empName)}
             </span>
             ${task.client ? `<span class="task-client-badge">${escapeHtml(task.client)}</span>` : ''}
@@ -417,7 +416,6 @@ function renderHistoryView() {
           <div class="history-title">${escapeHtml(task.title)}</div>
           <div class="history-meta">
             <span class="task-assignee-highlight" style="--emp-color:${empColor}">
-              <span class="task-assignee-dot" style="background:${empColor};"></span>
               ${escapeHtml(empName)}
             </span>
             ${task.client ? `<span class="task-client-badge">${escapeHtml(task.client)}</span>` : ''}
