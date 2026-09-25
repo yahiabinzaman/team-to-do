@@ -1,6 +1,7 @@
 # Team To do - Windows 1-Line Universal PowerShell Installer
 # Requires NO pre-installed Git or Node.js - Handles everything automatically!
 
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue
 $ErrorActionPreference = "Continue"
 
 Write-Host "========================================================" -ForegroundColor Cyan
@@ -13,9 +14,8 @@ $ExtractTemp = "$env:TEMP\team-to-do-extract"
 
 # --- 1. Check and Install Node.js if missing ---
 $hasNode = Get-Command node -ErrorAction SilentlyContinue
-$hasNpm = Get-Command npm -ErrorAction SilentlyContinue
 
-if (-not $hasNode -or -not $hasNpm) {
+if (-not $hasNode) {
     Write-Host "[1/4] Node.js is missing. Installing Node.js LTS automatically..." -ForegroundColor Yellow
     
     $hasWinget = Get-Command winget -ErrorAction SilentlyContinue
@@ -75,9 +75,9 @@ Remove-Item $ExtractTemp -Recurse -Force -ErrorAction SilentlyContinue
 Set-Location $InstallDir
 Write-Host "[OK] Files installed in $InstallDir" -ForegroundColor Green
 
-# --- 3. Install NPM Dependencies ---
+# --- 3. Install NPM Dependencies (using cmd.exe to avoid PS execution policy restrictions) ---
 Write-Host "[3/4] Installing application dependencies..." -ForegroundColor Cyan
-& npm install --no-audit --no-fund
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm install --no-audit --no-fund" -WorkingDirectory $InstallDir -Wait -NoNewWindow
 
 # --- 4. Configure Windows Startup & Launch ---
 Write-Host "[4/4] Setting up Windows Auto-start and launching widget..." -ForegroundColor Cyan
@@ -92,7 +92,7 @@ WshShell.Run "cmd /c start-windows.bat", 0, False
 "@
 Set-Content -Path $vbsFile -Value $vbsContent -Encoding ASCII
 
-# Start now silently
+# Start now
 Start-Process -FilePath "cmd.exe" -ArgumentList "/c start-windows.bat" -WorkingDirectory $InstallDir -WindowStyle Hidden
 
 Write-Host "========================================================" -ForegroundColor Green
