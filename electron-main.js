@@ -62,9 +62,14 @@ function createWidgetWindow() {
     }
   });
 
-  // Hide traffic lights and set workspace visibility on macOS
+  // Hide traffic lights and set desktop widget behavior on macOS
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
+    // Setting level to 'desktop' keeps the widget on the desktop behind all normal application windows
+    // It will never pop over or obstruct open apps
+    try {
+      mainWindow.setLevel('desktop');
+    } catch (e) {}
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   }
 
@@ -84,6 +89,100 @@ function createWidgetWindow() {
   });
 }
 
+let currentWindowMode = 'desktop'; // 'desktop' | 'normal' | 'always-on-top'
+
+function applyWindowMode(mode) {
+  currentWindowMode = mode;
+  if (!mainWindow) return;
+
+  if (mode === 'desktop') {
+    mainWindow.setAlwaysOnTop(false);
+    if (process.platform === 'darwin') {
+      try {
+        mainWindow.setLevel('desktop');
+      } catch (e) {}
+    }
+  } else if (mode === 'always-on-top') {
+    if (process.platform === 'darwin') {
+      try {
+        mainWindow.setLevel('normal');
+      } catch (e) {}
+    }
+    mainWindow.setAlwaysOnTop(true, 'floating');
+  } else {
+    // normal
+    if (process.platform === 'darwin') {
+      try {
+        mainWindow.setLevel('normal');
+      } catch (e) {}
+    }
+    mainWindow.setAlwaysOnTop(false);
+  }
+  updateTrayMenu();
+}
+
+function updateTrayMenu() {
+  if (!tray) return;
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: ' Team To-Do Widget',
+      enabled: false
+    },
+    { type: 'separator' },
+    {
+      label: '📌 Pin to Desktop (Behind Windows)',
+      type: 'radio',
+      checked: currentWindowMode === 'desktop',
+      click: () => applyWindowMode('desktop')
+    },
+    {
+      label: '🪟 Normal Window',
+      type: 'radio',
+      checked: currentWindowMode === 'normal',
+      click: () => applyWindowMode('normal')
+    },
+    {
+      label: '🔝 Always on Top (Floating)',
+      type: 'radio',
+      checked: currentWindowMode === 'always-on-top',
+      click: () => applyWindowMode('always-on-top')
+    },
+    { type: 'separator' },
+    {
+      label: 'Show / Hide Widget',
+      click: () => {
+        if (!mainWindow) {
+          createWidgetWindow();
+        } else if (mainWindow.isVisible()) {
+          mainWindow.hide();
+        } else {
+          mainWindow.showInactive();
+        }
+      }
+    },
+    {
+      label: 'Reset Position to Top-Left',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.setPosition(50, 70);
+          saveBounds(mainWindow.getBounds());
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      }
+    }
+  ]);
+
+  tray.setContextMenu(contextMenu);
+}
+
 function createSystemTray() {
   if (tray) return;
 
@@ -97,52 +196,14 @@ function createSystemTray() {
 
     tray = new Tray(trayIcon);
     tray.setToolTip('Team To-Do Widget');
+    updateTrayMenu();
 
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: ' Team To-Do Widget',
-        enabled: false
-      },
-      { type: 'separator' },
-      {
-        label: 'Show / Hide Widget',
-        click: () => {
-          if (!mainWindow) {
-            createWidgetWindow();
-          } else if (mainWindow.isVisible()) {
-            mainWindow.hide();
-          } else {
-            mainWindow.show();
-            mainWindow.focus();
-          }
-        }
-      },
-      {
-        label: 'Reset Position to Top-Left',
-        click: () => {
-          if (mainWindow) {
-            mainWindow.setPosition(50, 70);
-            saveBounds(mainWindow.getBounds());
-          }
-        }
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          app.isQuiting = true;
-          app.quit();
-        }
-      }
-    ]);
-
-    tray.setContextMenu(contextMenu);
     tray.on('click', () => {
       if (mainWindow) {
         if (mainWindow.isVisible()) {
-          mainWindow.focus();
+          mainWindow.showInactive();
         } else {
-          mainWindow.show();
+          mainWindow.showInactive();
         }
       }
     });
@@ -159,8 +220,7 @@ if (!gotTheLock) {
   app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
+      mainWindow.showInactive();
     }
   });
 
