@@ -835,6 +835,14 @@ function handleClientAction(action, senderWs) {
   }
 }
 
+process.on('uncaughtException', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.log(`[Server] Port ${PORT} already active. Connected to existing instance.`);
+    return;
+  }
+  console.error('[UncaughtException]:', err);
+});
+
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`[Server] Port ${PORT} is already in use. Connected to running instance.`);

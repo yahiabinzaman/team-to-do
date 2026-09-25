@@ -11,8 +11,5 @@ if not exist "node_modules\express\" (
     call npm install --no-audit --no-fund
 )
 
-:: Start the background real-time sync server
-start /b "" node server.js
-
-:: Launch the native frameless Electron desktop widget
+:: Launch the native frameless Electron desktop widget (starts internal server automatically)
 call npx electron electron-main.js

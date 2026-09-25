@@ -3,6 +3,15 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+// Prevent crash on port in-use race condition
+process.on('uncaughtException', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.log('[Main Process] Port 4173 is already in use. Connected to active server.');
+    return;
+  }
+  console.error('[Main Process Error]:', err);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
