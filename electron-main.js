@@ -391,11 +391,13 @@ function createSystemTray() {
     if (process.platform === 'win32') {
       trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.ico')).resize({ width: 16, height: 16 });
     } else {
-      trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon_512.png')).resize({ width: 18, height: 18 });
+      const templatePath = path.join(__dirname, 'trayTemplate.png');
+      trayIcon = nativeImage.createFromPath(templatePath).resize({ width: 18, height: 18 });
+      trayIcon.setTemplateImage(true);
     }
 
     tray = new Tray(trayIcon);
-    tray.setToolTip('Team To-Do Widget');
+    tray.setToolTip('Team To do');
     updateTrayMenu();
 
     tray.on('click', () => {
