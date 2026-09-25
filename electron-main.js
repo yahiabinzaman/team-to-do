@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, screen } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, screen, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -39,6 +39,7 @@ function createWidgetWindow() {
   const iconPath = getAppIconPath();
 
   mainWindow = new BrowserWindow({
+    title: 'Team To do',
     width: saved.width || 340,
     height: saved.height || 480,
     x: saved.x || 50,
@@ -126,24 +127,24 @@ function updateTrayMenu() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: ' Team To-Do Widget',
+      label: 'Team To do',
       enabled: false
     },
     { type: 'separator' },
     {
-      label: '📌 Pin to Desktop (Behind Windows)',
+      label: 'Pin to Desktop',
       type: 'radio',
       checked: currentWindowMode === 'desktop',
       click: () => applyWindowMode('desktop')
     },
     {
-      label: '🪟 Normal Window',
+      label: 'Normal Window',
       type: 'radio',
       checked: currentWindowMode === 'normal',
       click: () => applyWindowMode('normal')
     },
     {
-      label: '🔝 Always on Top (Floating)',
+      label: 'Always on Top',
       type: 'radio',
       checked: currentWindowMode === 'always-on-top',
       click: () => applyWindowMode('always-on-top')
@@ -168,6 +169,19 @@ function updateTrayMenu() {
           mainWindow.setPosition(50, 70);
           saveBounds(mainWindow.getBounds());
         }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'By Yahia Bin Zaman',
+      click: () => {
+        shell.openExternal('https://github.com/yahiabinzaman');
+      }
+    },
+    {
+      label: 'GitHub: yahiabinzaman/team-to-do',
+      click: () => {
+        shell.openExternal('https://github.com/yahiabinzaman/team-to-do');
       }
     },
     { type: 'separator' },

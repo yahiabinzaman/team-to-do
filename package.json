@@ -15,7 +15,7 @@
   },
   "build": {
     "appId": "com.teamtodo.desktopwidget",
-    "productName": "Team To-Do",
+    "productName": "Team To do",
     "directories": {
       "output": "dist"
     },
@@ -53,7 +53,7 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Team To-Do"
+      "shortcutName": "Team To do"
     }
   },
   "dependencies": {
