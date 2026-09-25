@@ -19,6 +19,13 @@ const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const ENV_FILE = path.join(__dirname, '.env');
 
+function getLocalISODate(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Auto-load .env configuration
 if (fs.existsSync(ENV_FILE)) {
   try {
@@ -606,7 +613,7 @@ function handleClientAction(action, senderWs) {
         client: payload.client || '',
         priority: payload.priority || 'medium',
         status: payload.status || 'todo',
-        dueDate: payload.dueDate || new Date().toISOString().split('T')[0],
+        dueDate: payload.dueDate || getLocalISODate(),
         dueTime: payload.dueTime || '18:00',
         completed: !!payload.completed,
         completedAt: payload.completed ? new Date().toISOString() : null,
@@ -780,7 +787,7 @@ function handleClientAction(action, senderWs) {
         title: payload.title || 'Schedule Item',
         employeeId: payload.employeeId || '',
         client: payload.client || '',
-        date: payload.date || new Date().toISOString().split('T')[0],
+        date: payload.date || getLocalISODate(),
         startTime: payload.startTime || '10:00',
         endTime: payload.endTime || '11:00',
         type: payload.type || 'meeting', // 'meeting', 'milestone', 'delivery', 'shift', 'workshop'
@@ -828,10 +835,18 @@ function handleClientAction(action, senderWs) {
   }
 }
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`[Server] Port ${PORT} is already in use. Connected to running instance.`);
+  } else {
+    console.error('[Server Error]', err);
+  }
+});
+
 // Start Server
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
-  console.log(`🚀 Apple-Style Real-time Team Widget Server is LIVE!`);
+  console.log(`🚀 Team To do Real-Time Server is LIVE!`);
   console.log(`📍 Localhost URL: http://localhost:${PORT}`);
   
   const interfaces = os.networkInterfaces();

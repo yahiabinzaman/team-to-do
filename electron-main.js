@@ -21,6 +21,7 @@ function getSavedBounds() {
 
 function saveBounds(bounds) {
   try {
+    fs.mkdirSync(path.dirname(BOUNDS_FILE), { recursive: true });
     fs.writeFileSync(BOUNDS_FILE, JSON.stringify(bounds, null, 2), 'utf-8');
   } catch (e) {}
 }
@@ -30,6 +31,18 @@ function getAppIconPath() {
     return path.join(__dirname, 'icon.ico');
   }
   return path.join(__dirname, 'icon_512.png');
+}
+
+async function ensureServerRunning() {
+  try {
+    const res = await fetch('http://localhost:4173/api/employees', { signal: AbortSignal.timeout(600) });
+    if (res.ok) return;
+  } catch (e) {}
+  try {
+    await import('./server.js');
+  } catch (err) {
+    console.log('[Server Startup Notice]:', err?.message || err);
+  }
 }
 
 function createWidgetWindow() {
@@ -433,7 +446,12 @@ if (!gotTheLock) {
     }
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
+    // Windows App ID for native taskbar grouping & notifications
+    if (process.platform === 'win32') {
+      app.setAppUserModelId('com.teamtodo.desktopwidget');
+    }
+
     // Native macOS / OS About panel
     app.setAboutPanelOptions({
       applicationName: 'Team To do',
@@ -457,6 +475,9 @@ if (!gotTheLock) {
       openAtLogin: true,
       openAsHidden: false
     });
+
+    // Ensure backend sync server is running
+    await ensureServerRunning();
 
     createWidgetWindow();
     createSystemTray();

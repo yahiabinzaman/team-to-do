@@ -1,5 +1,12 @@
 //  100% Native Apple Desktop Widget Engine (Cupertino HIG)
 
+function getLocalISODate(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const State = {
   version: 1,
   employees: [],
@@ -184,10 +191,10 @@ function renderTasksView() {
   }
 
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getLocalISODate(now);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const tomorrowStr = getLocalISODate(tomorrow);
 
   const groups = {
     overdue: [],
@@ -366,10 +373,10 @@ function renderHistoryView() {
   });
 
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getLocalISODate(now);
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yestStr = yesterday.toISOString().split('T')[0];
+  const yestStr = getLocalISODate(yesterday);
 
   const groups = {
     today: [],
@@ -535,10 +542,10 @@ function renderTimelineView() {
   const todaySlots = document.getElementById('calTodaySlots');
   const tomorrowSlots = document.getElementById('calTomorrowSlots');
 
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getLocalISODate(now);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const tomorrowStr = getLocalISODate(tomorrow);
 
   const hoursList = [
     { label: '9', h: 9 },
@@ -678,7 +685,7 @@ function selectQuickDate(type) {
   document.getElementById('btnDateCustom')?.classList.toggle('active', type === 'custom');
 
   if (type === 'today') {
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = getLocalISODate(now);
     if (dateInput) dateInput.value = todayStr;
     if (customContainer) customContainer.style.display = 'none';
     const dayName = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -686,7 +693,7 @@ function selectQuickDate(type) {
   } else if (type === 'tomorrow') {
     const tom = new Date();
     tom.setDate(tom.getDate() + 1);
-    const tomStr = tom.toISOString().split('T')[0];
+    const tomStr = getLocalISODate(tom);
     if (dateInput) dateInput.value = tomStr;
     if (customContainer) customContainer.style.display = 'none';
     const dayName = tom.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -694,7 +701,7 @@ function selectQuickDate(type) {
   } else {
     if (customContainer) customContainer.style.display = 'block';
     if (dateInput && !dateInput.value) {
-      dateInput.value = now.toISOString().split('T')[0];
+      dateInput.value = getLocalISODate(now);
     }
     if (dateInput) {
       updateCustomDateLabel(dateInput.value);
@@ -731,8 +738,10 @@ function openEditTaskModal(taskId) {
   document.getElementById('taskEmployeeSelect').value = task.employeeId;
   document.getElementById('taskClientInput').value = task.client || '';
   
-  const todayStr = new Date().toISOString().split('T')[0];
-  const tomStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const todayStr = getLocalISODate();
+  const tom = new Date();
+  tom.setDate(tom.getDate() + 1);
+  const tomStr = getLocalISODate(tom);
   
   if (!task.dueDate || task.dueDate === todayStr) {
     selectQuickDate('today');
@@ -758,7 +767,7 @@ function handleTaskSubmit(e) {
     title: document.getElementById('taskTitleInput').value.trim(),
     employeeId: document.getElementById('taskEmployeeSelect').value,
     client: document.getElementById('taskClientInput').value.trim(),
-    dueDate: document.getElementById('taskDueDateInput').value || new Date().toISOString().split('T')[0],
+    dueDate: document.getElementById('taskDueDateInput').value || getLocalISODate(),
     dueTime: document.getElementById('taskTimeSelect').value || '14:00'
   };
 
