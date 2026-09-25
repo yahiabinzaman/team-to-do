@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Widget</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- =========================================================
+       NATIVE APPLE MACOS SQUIRCLE DESKTOP WIDGET
+  ========================================================= -->
+  <div class="native-apple-widget app-drag">
+    <div class="widget-squircle">
+
+      <!-- TOP HEADER (Clean Apple Reminders Style) -->
+      <div class="reminders-widget-header no-drag">
+        <div class="reminders-count-block" onclick="openAddTaskModal()" style="cursor: pointer;">
+          <div class="reminders-big-count" id="widgetMainCount">5</div>
+          <div class="reminders-label" id="widgetMainLabel">
+            <span>Reminders</span>
+          </div>
+        </div>
+
+        <!-- Prominent Apple Action Buttons -->
+        <div class="header-action-group">
+          <button class="apple-header-btn btn-add-highlight" onclick="openAddTaskModal()" title="Add New Task">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <button class="apple-header-btn btn-settings-glass" onclick="openModal('settingsModal')" title="Settings & Members">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Segmented Tabs: Tasks | Team | Timeline | History -->
+      <div class="widget-mode-bar no-drag">
+        <button class="mode-tab-btn active" id="btnModeTasks" onclick="setWidgetDisplayMode('tasks')">Tasks</button>
+        <button class="mode-tab-btn" id="btnModeTeam" onclick="setWidgetDisplayMode('team')">Team</button>
+        <button class="mode-tab-btn" id="btnModeTimeline" onclick="setWidgetDisplayMode('timeline')">Timeline</button>
+        <button class="mode-tab-btn" id="btnModeHistory" onclick="setWidgetDisplayMode('history')">History</button>
+      </div>
+
+      <!-- VIEW 1: ALL ACTIVE TASKS (Grouped by Date & Scrollable) -->
+      <div class="widget-tab-view no-drag active" id="tasksView">
+        <div id="activeMemberFilterBanner" style="display: none;" class="member-filter-banner">
+          <span id="activeMemberFilterText">Tanvir's Tasks</span>
+          <button class="clear-filter-btn" onclick="clearMemberFilter()">Show All</button>
+        </div>
+        <div class="reminders-list-container" id="tasksListContainer">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- VIEW 2: TEAM MEMBERS (Click on any member to filter their tasks) -->
+      <div class="widget-tab-view no-drag" id="teamView">
+        <div class="team-members-list" id="teamMembersList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- VIEW 3: TIMELINE (2-Column Today & Tomorrow with Red Scrubber) -->
+      <div class="widget-tab-view no-drag" id="timelineView">
+        <div class="calendar-widget-grid">
+          <div class="cal-timeline-col">
+            <div class="cal-day-label" id="calTodayDayName">SATURDAY</div>
+            <div class="cal-date-number" id="calTodayDateNum">26</div>
+            <div class="cal-hourly-slots" id="calTodaySlots"></div>
+          </div>
+          <div class="cal-timeline-col">
+            <div class="cal-tomorrow-label">TOMORROW</div>
+            <div class="cal-hourly-slots" id="calTomorrowSlots" style="margin-top: 40px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: 1-YEAR COMPLETED HISTORY ARCHIVE -->
+      <div class="widget-tab-view no-drag" id="historyView">
+        <div class="history-view-container">
+          <div class="history-top-meta">
+            <div class="history-stats-badge" id="historyStatsBadge">0 Completed (1-Yr Archive)</div>
+            <input type="text" class="history-search-input" id="historySearchInput" placeholder="Search completed..." oninput="renderHistoryView()">
+          </div>
+          <div class="history-list-scroll" id="historyListContainer">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Add / Edit Task Modal (Apple Reminders Sheet Style) -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="apple-modal">
+      <div class="modal-header-row">
+        <div class="modal-title-group">
+          <div class="modal-title" id="taskModalHeaderTitle">New Task</div>
+          <div class="modal-subtitle" id="taskModalSubtitle">Apple Reminders</div>
+        </div>
+        <button class="modal-close-btn" type="button" onclick="closeModal('taskModal')">✕</button>
+      </div>
+
+      <form id="taskForm" onsubmit="handleTaskSubmit(event)" class="apple-form">
+        <input type="hidden" id="taskIdInput">
+
+        <div class="form-group">
+          <label class="form-label">Task Title</label>
+          <input type="text" class="form-input" id="taskTitleInput" placeholder="Design Dashboard UI" required autocomplete="off">
+        </div>
+
+        <div class="form-row-2col">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Assignee</label>
+            <div class="custom-select-wrapper">
+              <select class="form-select" id="taskEmployeeSelect" required></select>
+            </div>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Client</label>
+            <input type="text" class="form-input" id="taskClientInput" placeholder="Acme Corp" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Apple Date Selector Segmented Control -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label">Date</label>
+            <span class="form-label-meta" id="taskDateDisplayLabel">Today</span>
+          </div>
+          
+          <div class="apple-segmented-date-bar">
+            <button type="button" class="date-chip active" id="btnDateToday" onclick="selectQuickDate('today')">Today</button>
+            <button type="button" class="date-chip" id="btnDateTomorrow" onclick="selectQuickDate('tomorrow')">Tomorrow</button>
+            <button type="button" class="date-chip" id="btnDateCustom" onclick="selectQuickDate('custom')">Custom...</button>
+          </div>
+
+          <div id="customDateContainer" class="custom-date-container" style="display: none;">
+            <input type="date" class="form-input custom-date-input" id="taskDueDateInput">
+          </div>
+        </div>
+
+        <!-- Apple Time Selector -->
+        <div class="form-group">
+          <label class="form-label">Due Time</label>
+          <div class="custom-select-wrapper">
+            <select class="form-select" id="taskTimeSelect">
+              <option value="09:00">09:00 AM (Morning)</option>
+              <option value="10:00">10:00 AM</option>
+              <option value="11:00">11:00 AM</option>
+              <option value="12:00">12:00 PM (Noon)</option>
+              <option value="13:00">01:00 PM</option>
+              <option value="14:00" selected>02:00 PM (Afternoon)</option>
+              <option value="15:00">03:00 PM</option>
+              <option value="16:00">04:00 PM</option>
+              <option value="17:00">05:00 PM (End of Day)</option>
+              <option value="18:00">06:00 PM</option>
+              <option value="19:00">07:00 PM</option>
+              <option value="20:00">08:00 PM (Evening)</option>
+              <option value="21:00">09:00 PM</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Apple Action Buttons -->
+        <div class="modal-footer-row">
+          <button type="button" class="btn-apple-cancel" onclick="closeModal('taskModal')">Cancel</button>
+          <button type="submit" class="btn-apple-save" id="taskModalSaveBtn">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Apple Cupertino Style) -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="apple-modal" style="max-width: 320px;">
+      <div class="modal-header-row">
+        <div class="modal-title">Settings</div>
+        <button class="modal-close-btn" onclick="closeModal('settingsModal')">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; max-height:260px; overflow-y:auto; padding-right: 2px;">
+        <div>
+          <div class="modal-section-title">
+            <span>Team Members</span>
+            <button class="clear-filter-btn" onclick="openAddEmployeeModal()">+ Add</button>
+          </div>
+          <div id="settingsEmpList" style="display:flex; flex-direction:column; gap:4px;"></div>
+        </div>
+
+        <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
+          <div class="modal-section-title">Real-Time Sync</div>
+          <div id="syncPeerCountBadge" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">● Live Synced</div>
+          <div id="settingsLanUrls" style="font-size:9.5px; font-family:ui-monospace, monospace; color:var(--text-tertiary); margin-top:4px; word-break:break-all;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
+        <button type="button" class="btn-apple-save" onclick="closeModal('settingsModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Member Modal -->
+  <div class="modal-overlay" id="employeeModal">
+    <div class="apple-modal">
+      <div class="modal-header-row">
+        <div class="modal-title-group">
+          <div class="modal-title">New Team Member</div>
+          <div class="modal-subtitle">Team Settings</div>
+        </div>
+        <button class="modal-close-btn" type="button" onclick="closeModal('employeeModal')">✕</button>
+      </div>
+      <form id="employeeForm" onsubmit="handleEmployeeSubmit(event)" class="apple-form">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="empNameInput" placeholder="Tanvir Ahmed" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role / Designation</label>
+          <input type="text" class="form-input" id="empRoleInput" placeholder="UI/UX Designer" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned Clients (comma separated)</label>
+          <input type="text" class="form-input" id="empClientsInput" placeholder="Acme Corp, Apex Tech" autocomplete="off">
+        </div>
+        <div class="modal-footer-row">
+          <button type="button" class="btn-apple-cancel" onclick="closeModal('employeeModal')">Cancel</button>
+          <button type="submit" class="btn-apple-save">Add Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="sounds.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

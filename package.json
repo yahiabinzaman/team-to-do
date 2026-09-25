@@ -1,0 +1,30 @@
+{
+  "name": "apple-style-team-widget",
+  "version": "1.0.0",
+  "description": "Apple-style Real-time Team Task, Client Matrix & Calendar Widget for Mac & Windows",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "widget": "electron electron-main.js",
+    "app": "node server.js & electron electron-main.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  },
+  "keywords": [
+    "apple-widget",
+    "realtime-sync",
+    "team-tasks",
+    "calendar",
+    "client-matrix"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^44.4.5"
+  }
+}

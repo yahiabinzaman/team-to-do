@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# macOS system files
+.DS_Store
+*.iconset/
+
+# OS and runtime artifacts
+dist/
+build/
+.env
+.env.local
+*.log
+
+# Windows specific
+Thumbs.db

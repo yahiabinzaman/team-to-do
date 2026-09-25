@@ -1,0 +1,297 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-09-25T20:51:43.414Z",
+  "employees": [
+    {
+      "id": "emp-1",
+      "name": "Tanvir Ahmed",
+      "role": "Lead UI/UX Designer",
+      "email": "tanvir@studio.com",
+      "avatarColor": "#0A84FF",
+      "avatarText": "TA",
+      "active": true,
+      "todayClients": [
+        "Acme Corp",
+        "Apex Tech"
+      ],
+      "createdAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "emp-2",
+      "name": "Nusrat Jahan",
+      "role": "Senior Full Stack Dev",
+      "email": "nusrat@studio.com",
+      "avatarColor": "#30D158",
+      "avatarText": "NJ",
+      "active": true,
+      "todayClients": [
+        "CloudScale",
+        "FinHealth"
+      ],
+      "createdAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "emp-3",
+      "name": "Rafiqul Islam",
+      "role": "Motion & Brand Designer",
+      "email": "rafiq@studio.com",
+      "avatarColor": "#FF9F0A",
+      "avatarText": "RI",
+      "active": true,
+      "todayClients": [
+        "Apex Tech"
+      ],
+      "createdAt": "2026-09-01T00:00:00Z"
+    },
+    {
+      "id": "emp-4",
+      "name": "Sarah Khan",
+      "role": "Project Manager & QA",
+      "email": "sarah@studio.com",
+      "avatarColor": "#BF5AF2",
+      "avatarText": "SK",
+      "active": true,
+      "todayClients": [
+        "Acme Corp",
+        "FinHealth"
+      ],
+      "createdAt": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1790368504699-zcxe",
+      "title": "Cover Design",
+      "description": "",
+      "employeeId": "emp-3",
+      "client": "Islampur",
+      "priority": "medium",
+      "status": "done",
+      "dueDate": "2026-09-26",
+      "dueTime": "14:00",
+      "completed": true,
+      "completedAt": "2026-09-25T20:37:26.838Z",
+      "createdAt": "2026-09-25T20:35:04.699Z"
+    },
+    {
+      "id": "task-1790368392961-y592",
+      "title": "Cover design",
+      "description": "",
+      "employeeId": "emp-1",
+      "client": "Islampur Madrasa",
+      "priority": "medium",
+      "status": "todo",
+      "dueDate": "2026-09-26",
+      "dueTime": "16:00",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T20:33:12.961Z"
+    },
+    {
+      "id": "task-1790368347682-yzn1",
+      "title": "Inner Album",
+      "description": "",
+      "employeeId": "emp-1",
+      "client": "Al Islam",
+      "priority": "medium",
+      "status": "todo",
+      "dueDate": "2026-09-30",
+      "dueTime": "14:00",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T20:32:27.682Z"
+    },
+    {
+      "id": "task-1790368158144-9lkm",
+      "title": "Inner album",
+      "description": "",
+      "employeeId": "emp-2",
+      "client": "Al Miftah",
+      "priority": "medium",
+      "status": "done",
+      "dueDate": "2026-09-25",
+      "dueTime": "14:00",
+      "completed": true,
+      "completedAt": "2026-09-25T20:37:25.220Z",
+      "createdAt": "2026-09-25T20:29:18.144Z"
+    },
+    {
+      "id": "task-1",
+      "title": "Design Dashboard Glassmorphism UI Components",
+      "description": "Create dark & light mode tokens and responsive widget cards.",
+      "employeeId": "emp-1",
+      "client": "",
+      "priority": "high",
+      "status": "todo",
+      "dueDate": "2026-09-26",
+      "dueTime": "16:00",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T19:49:24.698Z",
+      "updatedAt": "2026-09-25T20:51:43.414Z"
+    },
+    {
+      "id": "task-2",
+      "title": "Real-time WebSocket & Client Sync Architecture",
+      "description": "Implement bi-directional event broadcast with offline caching.",
+      "employeeId": "emp-3",
+      "client": "CloudScale",
+      "priority": "urgent",
+      "status": "todo",
+      "dueDate": "2026-09-26",
+      "dueTime": "18:30",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T19:49:24.698Z",
+      "updatedAt": "2026-09-25T20:13:36.154Z"
+    },
+    {
+      "id": "task-3",
+      "title": "Brand Hero Animation in Lottie & 3D Render",
+      "description": "Deliver 60fps smooth loop animation for website header.",
+      "employeeId": "emp-3",
+      "client": "Apex Tech",
+      "priority": "medium",
+      "status": "todo",
+      "dueDate": "2026-09-27",
+      "dueTime": "14:00",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T19:49:24.698Z"
+    },
+    {
+      "id": "task-4",
+      "title": "Sprint Review & QA Delivery with Client Stakeholders",
+      "description": "Conduct live demo walkthrough and capture release feedback.",
+      "employeeId": "emp-4",
+      "client": "FinHealth",
+      "priority": "high",
+      "status": "todo",
+      "dueDate": "2026-09-26",
+      "dueTime": "20:00",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2026-09-25T19:49:24.698Z"
+    },
+    {
+      "id": "task-5",
+      "title": "Mobile Widget Layout Optimization",
+      "description": "Fine-tune compact widget padding and responsive typography.",
+      "employeeId": "emp-1",
+      "client": "Apex Tech",
+      "priority": "low",
+      "status": "done",
+      "dueDate": "2026-09-25",
+      "dueTime": "12:00",
+      "completed": true,
+      "completedAt": "2026-09-25T20:37:25.963Z",
+      "createdAt": "2026-09-25T19:49:24.698Z"
+    }
+  ],
+  "clients": [
+    {
+      "id": "client-1",
+      "name": "Acme Corp",
+      "tagline": "Enterprise Cloud Solutions",
+      "badgeColor": "#0A84FF",
+      "activeProjects": 3,
+      "leadContact": "John Doe",
+      "status": "active"
+    },
+    {
+      "id": "client-2",
+      "name": "Apex Tech",
+      "tagline": "NextGen AI & Automation",
+      "badgeColor": "#FF375F",
+      "activeProjects": 2,
+      "leadContact": "Elena Rostova",
+      "status": "active"
+    },
+    {
+      "id": "client-3",
+      "name": "CloudScale",
+      "tagline": "Global Distributed Infrastructure",
+      "badgeColor": "#30D158",
+      "activeProjects": 4,
+      "leadContact": "Mark Zuckerberg",
+      "status": "active"
+    },
+    {
+      "id": "client-4",
+      "name": "FinHealth",
+      "tagline": "Modern Digital Healthcare Banking",
+      "badgeColor": "#BF5AF2",
+      "activeProjects": 2,
+      "leadContact": "Dr. Evelyn Reed",
+      "status": "active"
+    }
+  ],
+  "schedules": [
+    {
+      "id": "sched-1",
+      "title": "Client Sprint Alignment",
+      "employeeId": "emp-1",
+      "client": "Acme Corp",
+      "date": "2026-09-26",
+      "startTime": "10:00",
+      "endTime": "11:30",
+      "type": "meeting",
+      "notes": "Review Figma wireframes and interaction specs."
+    },
+    {
+      "id": "sched-2",
+      "title": "API Performance & Load Test",
+      "employeeId": "emp-2",
+      "client": "CloudScale",
+      "date": "2026-09-26",
+      "startTime": "14:00",
+      "endTime": "16:00",
+      "type": "milestone",
+      "notes": "Benchmark 50,000 concurrent socket connections."
+    },
+    {
+      "id": "sched-3",
+      "title": "Apex Tech Brand Pitch Call",
+      "employeeId": "emp-3",
+      "client": "Apex Tech",
+      "date": "2026-09-27",
+      "startTime": "15:00",
+      "endTime": "16:30",
+      "type": "delivery",
+      "notes": "Final presentation of 3D motion assets."
+    },
+    {
+      "id": "sched-4",
+      "title": "FinHealth Security & Compliance Review",
+      "employeeId": "emp-4",
+      "client": "FinHealth",
+      "date": "2026-09-28",
+      "startTime": "11:00",
+      "endTime": "12:30",
+      "type": "meeting",
+      "notes": "HIPAA & ISO audit sign-off."
+    },
+    {
+      "id": "sched-5",
+      "title": "Design System Team Workshop",
+      "employeeId": "emp-1",
+      "client": "Apex Tech",
+      "date": "2026-09-29",
+      "startTime": "13:00",
+      "endTime": "15:00",
+      "type": "workshop",
+      "notes": "Internal training on Apple Design Language."
+    },
+    {
+      "id": "sched-6",
+      "title": "Architecture Sync & Code Review",
+      "employeeId": "emp-2",
+      "client": "FinHealth",
+      "date": "2026-09-30",
+      "startTime": "16:00",
+      "endTime": "17:30",
+      "type": "milestone",
+      "notes": "Backend database migration validation."
+    }
+  ]
+}
