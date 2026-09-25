@@ -122,6 +122,198 @@ function applyWindowMode(mode) {
   updateTrayMenu();
 }
 
+let aboutWindow = null;
+
+function openAboutWindow() {
+  if (aboutWindow) {
+    aboutWindow.show();
+    aboutWindow.focus();
+    return;
+  }
+
+  let iconBase64 = '';
+  try {
+    iconBase64 = fs.readFileSync(path.join(__dirname, 'icon_512.png')).toString('base64');
+  } catch (e) {}
+
+  aboutWindow = new BrowserWindow({
+    width: 320,
+    height: 390,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    center: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  const html = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        background: transparent;
+        color: #FFFFFF;
+        user-select: none;
+        -webkit-user-select: none;
+        overflow: hidden;
+        padding: 12px;
+      }
+      .about-card {
+        background: rgba(30, 30, 32, 0.96);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.65);
+        padding: 22px 20px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        -webkit-app-region: drag;
+      }
+      .close-btn {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #FF5F56;
+        border: none;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+      }
+      .close-btn:hover { background: #E0443E; }
+      .app-icon {
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        margin-top: 4px;
+        margin-bottom: 12px;
+      }
+      .app-title {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: #FFFFFF;
+        margin-bottom: 2px;
+      }
+      .app-version {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 12px;
+      }
+      .developer-block {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 10px 14px;
+        width: 100%;
+        margin-bottom: 12px;
+        -webkit-app-region: no-drag;
+      }
+      .dev-label {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 3px;
+      }
+      .dev-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #FFFFFF;
+        text-decoration: none;
+        display: inline-block;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      .dev-name:hover {
+        color: #0A84FF;
+      }
+      .btn-github {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #0A84FF;
+        color: #FFFFFF;
+        text-decoration: none;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 7px 16px;
+        border-radius: 999px;
+        transition: all 0.2s;
+        -webkit-app-region: no-drag;
+        box-shadow: 0 4px 12px rgba(10, 132, 255, 0.35);
+        cursor: pointer;
+      }
+      .btn-github:hover {
+        background: #0071E3;
+        transform: translateY(-1px);
+      }
+      .copyright {
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="about-card">
+      <button class="close-btn" onclick="window.close()" title="Close"></button>
+      <img class="app-icon" src="data:image/png;base64,${iconBase64}" alt="Team To do Icon" />
+      <div class="app-title">Team To do</div>
+      <div class="app-version">Version 1.0.0</div>
+      
+      <div class="developer-block">
+        <div class="dev-label">Designed & Developed by</div>
+        <a class="dev-name" href="https://github.com/yahiabinzaman" target="_blank">Yahia Bin Zaman ↗</a>
+      </div>
+
+      <a class="btn-github" href="https://github.com/yahiabinzaman/team-to-do" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub Repository
+      </a>
+
+      <div class="copyright">Copyright © 2026 Yahia Bin Zaman</div>
+    </div>
+  </body>
+  </html>
+  `;
+
+  aboutWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+
+  aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  aboutWindow.once('ready-to-show', () => {
+    aboutWindow.show();
+  });
+
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
+}
+
 function updateTrayMenu() {
   if (!tray) return;
 
@@ -175,11 +367,7 @@ function updateTrayMenu() {
     {
       label: 'About Team To do',
       click: () => {
-        if (process.platform === 'darwin') {
-          app.showAboutPanel();
-        } else {
-          shell.openExternal('https://github.com/yahiabinzaman/team-to-do');
-        }
+        openAboutWindow();
       }
     },
     {
