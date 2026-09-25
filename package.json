@@ -33,13 +33,20 @@
     ],
     "mac": {
       "icon": "app.icns",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.productivity",
       "darkModeSupport": true
     },
     "win": {
       "icon": "icon.ico",
-      "target": ["nsis", "portable", "zip"]
+      "target": [
+        "nsis",
+        "portable",
+        "zip"
+      ]
     },
     "nsis": {
       "oneClick": true,
@@ -50,6 +57,7 @@
     }
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "ws": "^8.17.0"

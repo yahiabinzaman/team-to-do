@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,27 @@ const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 4173;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const ENV_FILE = path.join(__dirname, '.env');
+
+// Auto-load .env configuration
+if (fs.existsSync(ENV_FILE)) {
+  try {
+    const envRaw = fs.readFileSync(ENV_FILE, 'utf-8');
+    envRaw.split('\n').forEach(line => {
+      const idx = line.indexOf('=');
+      if (idx > 0 && !line.startsWith('#')) {
+        const k = line.substring(0, idx).trim();
+        const v = line.substring(idx + 1).trim();
+        if (k && !process.env[k]) process.env[k] = v;
+      }
+    });
+  } catch (e) {}
+}
+
+// Supabase Cloud Configuration
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -293,8 +315,191 @@ function writeStore(data) {
   }
 }
 
+// Supabase Data Mapper Helpers
+function taskToSupabase(t) {
+  return {
+    id: t.id,
+    title: t.title,
+    description: t.description || '',
+    employee_id: t.employeeId || null,
+    client: t.client || '',
+    due_date: t.dueDate || null,
+    due_time: t.dueTime || null,
+    completed: !!t.completed,
+    completed_at: t.completedAt || null,
+    created_at: t.createdAt || new Date().toISOString(),
+    updated_at: t.updatedAt || new Date().toISOString()
+  };
+}
+
+function supabaseToTask(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    employeeId: row.employee_id || '',
+    client: row.client || '',
+    dueDate: row.due_date || '',
+    dueTime: row.due_time || '',
+    completed: !!row.completed,
+    completedAt: row.completed_at || null,
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || new Date().toISOString()
+  };
+}
+
+function employeeToSupabase(e) {
+  return {
+    id: e.id,
+    name: e.name,
+    role: e.role || '',
+    email: e.email || '',
+    avatar_color: e.avatarColor || '#0A84FF',
+    avatar_text: e.avatarText || 'EM',
+    today_clients: e.todayClients || [],
+    created_at: e.createdAt || new Date().toISOString()
+  };
+}
+
+function supabaseToEmployee(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role || '',
+    email: row.email || '',
+    avatarColor: row.avatar_color || '#0A84FF',
+    avatarText: row.avatar_text || 'EM',
+    todayClients: row.today_clients || [],
+    active: true,
+    createdAt: row.created_at || new Date().toISOString()
+  };
+}
+
+// Background Cloud Sync Callers
+async function syncTaskToCloud(task) {
+  if (!supabase) return;
+  try {
+    await supabase.from('tasks').upsert(taskToSupabase(task));
+  } catch (e) {}
+}
+
+async function deleteTaskFromCloud(id) {
+  if (!supabase) return;
+  try {
+    await supabase.from('tasks').delete().eq('id', id);
+  } catch (e) {}
+}
+
+async function syncEmployeeToCloud(employee) {
+  if (!supabase) return;
+  try {
+    await supabase.from('employees').upsert(employeeToSupabase(employee));
+  } catch (e) {}
+}
+
+async function deleteEmployeeFromCloud(id) {
+  if (!supabase) return;
+  try {
+    await supabase.from('employees').delete().eq('id', id);
+  } catch (e) {}
+}
+
 // In-memory active store
 let currentStore = readStore();
+
+// Initial Cloud Sync & Realtime Stream
+async function initSupabaseCloudSync() {
+  if (!supabase) {
+    console.log('[Supabase] No SUPABASE_URL / SUPABASE_KEY set. Running in offline/LAN local mode.');
+    return;
+  }
+  try {
+    console.log('[Supabase] Initializing Cloud Real-time Sync...');
+    // 1. Fetch cloud employees
+    const { data: cloudEmps, error: empErr } = await supabase.from('employees').select('*');
+    if (!empErr && cloudEmps) {
+      if (cloudEmps.length === 0 && currentStore.employees.length > 0) {
+        await supabase.from('employees').upsert(currentStore.employees.map(employeeToSupabase));
+      } else if (cloudEmps.length > 0) {
+        currentStore.employees = cloudEmps.map(supabaseToEmployee);
+      }
+    }
+
+    // 2. Fetch cloud tasks
+    const { data: cloudTasks, error: taskErr } = await supabase.from('tasks').select('*');
+    if (!taskErr && cloudTasks) {
+      if (cloudTasks.length === 0 && currentStore.tasks.length > 0) {
+        await supabase.from('tasks').upsert(currentStore.tasks.map(taskToSupabase));
+      } else if (cloudTasks.length > 0) {
+        currentStore.tasks = cloudTasks.map(supabaseToTask);
+      }
+    }
+
+    writeStore(currentStore);
+    broadcast({ type: 'FULL_SYNC', data: currentStore });
+    console.log('[Supabase] Cloud Sync Connected! Real-time stream active.');
+
+    // 3. Realtime Postgres Event Listener
+    supabase
+      .channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newTask = supabaseToTask(payload.new);
+          if (!currentStore.tasks.some(t => t.id === newTask.id)) {
+            currentStore.tasks.unshift(newTask);
+            writeStore(currentStore);
+            broadcast({ type: 'TASK_ADDED', task: newTask });
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = supabaseToTask(payload.new);
+          const idx = currentStore.tasks.findIndex(t => t.id === updated.id);
+          if (idx !== -1) {
+            currentStore.tasks[idx] = updated;
+          } else {
+            currentStore.tasks.unshift(updated);
+          }
+          writeStore(currentStore);
+          broadcast({ type: 'TASK_UPDATED', task: updated });
+        } else if (payload.eventType === 'DELETE') {
+          const delId = payload.old.id;
+          currentStore.tasks = currentStore.tasks.filter(t => t.id !== delId);
+          writeStore(currentStore);
+          broadcast({ type: 'TASK_DELETED', id: delId });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newEmp = supabaseToEmployee(payload.new);
+          if (!currentStore.employees.some(e => e.id === newEmp.id)) {
+            currentStore.employees.push(newEmp);
+            writeStore(currentStore);
+            broadcast({ type: 'EMPLOYEE_ADDED', employee: newEmp });
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = supabaseToEmployee(payload.new);
+          const idx = currentStore.employees.findIndex(e => e.id === updated.id);
+          if (idx !== -1) {
+            currentStore.employees[idx] = updated;
+          } else {
+            currentStore.employees.push(updated);
+          }
+          writeStore(currentStore);
+          broadcast({ type: 'EMPLOYEE_UPDATED', employee: updated });
+        } else if (payload.eventType === 'DELETE') {
+          const delId = payload.old.id;
+          currentStore.employees = currentStore.employees.filter(e => e.id !== delId);
+          writeStore(currentStore);
+          broadcast({ type: 'EMPLOYEE_DELETED', id: delId });
+        }
+      })
+      .subscribe();
+  } catch (err) {
+    console.error('[Supabase] Sync notice:', err);
+  }
+}
+
+// Start cloud sync
+initSupabaseCloudSync();
 
 // Middleware
 app.use(express.json());
@@ -409,7 +614,8 @@ function handleClientAction(action, senderWs) {
       };
       currentStore.tasks.unshift(newTask);
       writeStore(currentStore);
-      broadcast({ type: 'TASK_ADDED', task: newTask, clientInfo }, senderWs);
+      syncTaskToCloud(newTask);
+      broadcast({ type: 'TASK_ADDED', task: newTask, clientInfo });
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: newTask }));
       break;
     }
@@ -425,7 +631,8 @@ function handleClientAction(action, senderWs) {
           }
         }
         writeStore(currentStore);
-        broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo }, senderWs);
+        syncTaskToCloud(currentStore.tasks[idx]);
+        broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
       }
       break;
@@ -435,7 +642,8 @@ function handleClientAction(action, senderWs) {
       const taskToDelete = currentStore.tasks.find(t => t.id === payload.id);
       currentStore.tasks = currentStore.tasks.filter(t => t.id !== payload.id);
       writeStore(currentStore);
-      broadcast({ type: 'TASK_DELETED', id: payload.id, task: taskToDelete, clientInfo }, senderWs);
+      deleteTaskFromCloud(payload.id);
+      broadcast({ type: 'TASK_DELETED', id: payload.id, task: taskToDelete, clientInfo });
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: { id: payload.id } }));
       break;
     }
@@ -448,7 +656,8 @@ function handleClientAction(action, senderWs) {
         currentStore.tasks[idx].status = isDone ? 'done' : (payload.newStatus || 'todo');
         currentStore.tasks[idx].completedAt = isDone ? new Date().toISOString() : null;
         writeStore(currentStore);
-        broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo }, senderWs);
+        syncTaskToCloud(currentStore.tasks[idx]);
+        broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
       }
       break;
@@ -479,7 +688,8 @@ function handleClientAction(action, senderWs) {
       };
       currentStore.employees.push(newEmp);
       writeStore(currentStore);
-      broadcast({ type: 'EMPLOYEE_ADDED', employee: newEmp, clientInfo }, senderWs);
+      syncEmployeeToCloud(newEmp);
+      broadcast({ type: 'EMPLOYEE_ADDED', employee: newEmp, clientInfo });
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: newEmp }));
       break;
     }
@@ -497,7 +707,8 @@ function handleClientAction(action, senderWs) {
             .slice(0, 2);
         }
         writeStore(currentStore);
-        broadcast({ type: 'EMPLOYEE_UPDATED', employee: currentStore.employees[idx], clientInfo }, senderWs);
+        syncEmployeeToCloud(currentStore.employees[idx]);
+        broadcast({ type: 'EMPLOYEE_UPDATED', employee: currentStore.employees[idx], clientInfo });
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.employees[idx] }));
       }
       break;
@@ -506,17 +717,16 @@ function handleClientAction(action, senderWs) {
     case 'DELETE_EMPLOYEE': {
       const empId = payload.id;
       currentStore.employees = currentStore.employees.filter(e => e.id !== empId);
-      // Reassign or unassign tasks
       currentStore.tasks = currentStore.tasks.map(t => {
         if (t.employeeId === empId) {
           return { ...t, employeeId: '' };
         }
         return t;
       });
-      // Remove from schedules
       currentStore.schedules = currentStore.schedules.filter(s => s.employeeId !== empId);
       writeStore(currentStore);
-      broadcast({ type: 'EMPLOYEE_DELETED', id: empId, clientInfo }, senderWs);
+      deleteEmployeeFromCloud(empId);
+      broadcast({ type: 'EMPLOYEE_DELETED', id: empId, clientInfo });
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: { id: empId } }));
       break;
     }
@@ -527,7 +737,8 @@ function handleClientAction(action, senderWs) {
       if (idx !== -1) {
         currentStore.employees[idx].todayClients = payload.clients || [];
         writeStore(currentStore);
-        broadcast({ type: 'EMPLOYEE_UPDATED', employee: currentStore.employees[idx], clientInfo }, senderWs);
+        syncEmployeeToCloud(currentStore.employees[idx]);
+        broadcast({ type: 'EMPLOYEE_UPDATED', employee: currentStore.employees[idx], clientInfo });
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.employees[idx] }));
       }
       break;
