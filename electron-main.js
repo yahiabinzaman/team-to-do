@@ -62,15 +62,17 @@ function createWidgetWindow() {
     }
   });
 
-  // Hide traffic lights on macOS
+  // Hide traffic lights and set workspace visibility on macOS
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   }
 
   mainWindow.loadURL('http://localhost:4173');
 
+  // Open quietly in desktop background without popping over active windows
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    mainWindow.showInactive();
   });
 
   // Save bounds on move/resize
