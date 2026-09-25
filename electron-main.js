@@ -137,17 +137,19 @@ function openAboutWindow() {
   } catch (e) {}
 
   aboutWindow = new BrowserWindow({
-    width: 320,
-    height: 390,
+    width: 300,
+    height: 360,
     resizable: false,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
     frame: false,
     transparent: true,
+    hasShadow: false,
     alwaysOnTop: true,
     center: true,
     show: false,
+    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
@@ -161,22 +163,24 @@ function openAboutWindow() {
     <meta charset="UTF-8">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
       body {
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-        background: transparent;
         color: #FFFFFF;
         user-select: none;
         -webkit-user-select: none;
-        overflow: hidden;
-        padding: 12px;
       }
       .about-card {
-        background: rgba(30, 30, 32, 0.96);
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        width: 100%;
+        height: 100%;
+        background: #1C1C1E;
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 20px;
-        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.65);
         padding: 22px 20px 18px;
         display: flex;
         flex-direction: column;
@@ -199,10 +203,10 @@ function openAboutWindow() {
       }
       .close-btn:hover { background: #E0443E; }
       .app-icon {
-        width: 76px;
-        height: 76px;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        width: 72px;
+        height: 72px;
+        border-radius: 17px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         margin-top: 4px;
         margin-bottom: 12px;
       }
