@@ -1,30 +1,72 @@
 {
-  "name": "apple-style-team-widget",
+  "name": "team-to-do",
   "version": "1.0.0",
-  "description": "Apple-style Real-time Team Task, Client Matrix & Calendar Widget for Mac & Windows",
+  "description": "Apple Reminders Style Real-time Desktop Team Task & Calendar Widget for Mac & Windows",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "widget": "electron electron-main.js",
     "app": "node server.js & electron electron-main.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.teamtodo.desktopwidget",
+    "productName": "Team To-Do",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "server.js",
+      "electron-main.js",
+      "preload.cjs",
+      "public/**/*",
+      "data/**/*",
+      "icon.ico",
+      "icon_512.png",
+      "icon.png",
+      "app.icns",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "app.icns",
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true
+    },
+    "win": {
+      "icon": "icon.ico",
+      "target": ["nsis", "portable", "zip"]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Team To-Do"
+    }
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "ws": "^8.17.0"
   },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^24.13.3"
+  },
   "keywords": [
     "apple-widget",
-    "realtime-sync",
+    "macos-widget",
+    "windows-widget",
+    "reminders",
     "team-tasks",
-    "calendar",
-    "client-matrix"
+    "realtime-sync",
+    "electron-widget"
   ],
-  "author": "Antigravity",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^44.4.5"
-  }
+  "author": "Yahia Bin Zaman",
+  "license": "MIT"
 }
