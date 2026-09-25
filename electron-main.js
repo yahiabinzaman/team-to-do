@@ -89,6 +89,17 @@ function createWidgetWindow() {
 
   mainWindow.loadURL('http://localhost:4173');
 
+  // Auto-retry connection if server is still starting up
+  mainWindow.webContents.on('did-fail-load', (event, errorCode) => {
+    if (errorCode !== -3) { // -3 is ABORTED, ignore
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL('http://localhost:4173');
+        }
+      }, 800);
+    }
+  });
+
   // Open quietly in desktop background without popping over active windows
   mainWindow.once('ready-to-show', () => {
     mainWindow.showInactive();
