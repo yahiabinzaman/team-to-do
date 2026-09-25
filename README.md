@@ -1,76 +1,85 @@
 <div align="center">
 
-#  Team To-Do
-### Real-time Team Task & Calendar Desktop Widget (Apple Style)
+# Team To do
+### Real-Time Team Task & Calendar Desktop Widget
 
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/yahiabinzaman/team-to-do)
-[![Real-Time](https://img.shields.io/badge/Sync-Live%20Multi--Device-0A84FF?style=for-the-badge)](https://github.com/yahiabinzaman/team-to-do)
-[![License](https://img.shields.io/badge/License-MIT-30D158?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-000000?style=flat-square&logo=apple&logoColor=white)](https://github.com/yahiabinzaman/team-to-do)
+[![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Sync](https://img.shields.io/badge/Sync-Real--Time%20WebSocket-0A84FF?style=flat-square)](https://github.com/yahiabinzaman/team-to-do)
+[![License](https://img.shields.io/badge/License-MIT-30D158?style=flat-square)](LICENSE)
 
-**A minimalistic, transparent desktop widget that keeps your entire team in sync in real-time.**
-
----
+An authentic Apple Reminders-style desktop widget designed for seamless, multi-device team collaboration with instantaneous cloud synchronization.
 
 </div>
 
-## 📌 এই অ্যাপের মূল কাজ কি? (What This App Does)
+---
 
-1. **⚡ লাইভ টিম সিঙ্ক (Real-time Team Sync)**  
-   টিমের কে কোন ক্লায়েন্টের কী কাজ করছে তা সবসময় ডেস্কটপ স্ক্রিনে লাইভ দেখা যায়। একজন কাজ যোগ বা কমপ্লিট করলে সাথে সাথে সবার কম্পিউটারে আপডেট হয়ে যায়।
+## Key Features
 
-2. **📅 তারিখ অনুযায়ী সাজানো কাজ (Tasks by Date)**  
-   আজকের কাজ (`Today`), আগামীকালের কাজ (`Tomorrow`) এবং ভবিষ্যৎ তারিখের কাজগুলো আলাদা আলাদা হেডলাইনে সাজানো থাকে।
-
-3. **👥 টিম মেম্বার ফিল্টার (Team Member Matrix)**  
-   কার কয়টি কাজ বাকি এবং কে কোন ক্লায়েন্টের কাজ করছে তা দেখা যায়। কারো নামের উপর ক্লিক করলেই শুধু তার কাজগুলো সামনে চলে আসে।
-
-4. **⏰ লাইভ ক্যালেন্ডার টাইমলাইন (2-Column Timeline)**  
-   অ্যাপল ক্যালেন্ডারের মতো আজকের ও আগামীকালের কোন ঘণ্টায় কার কী কাজ আছে তা লাইভ রেড টাইম-লাইন সহ দেখা যায়।
-
-5. **🗄️ ১ বছরের হিস্ট্রি ব্যাকআপ (1-Year History Archive)**  
-   কমপ্লিট হওয়া কাজগুলো মুছে যায় না—১ বছর পর্যন্ত হিস্ট্রিতে সেভ থাকে। যেকোনো সময় দেখা যায় বা আবার রিস্টোর করা যায়।
-
-6. **🖥️ কম্পিউটার অন করলেই অটো ওপেন (Always on Desktop)**  
-   পিসি বা ম্যাক অন করলেই উইজেটটি স্বয়ংক্রিয়ভাবে ওপেন হয়ে স্ক্রিনের পাশে সুন্দরভাবে বসে থাকে।
+- **Desktop Background Widget**: Glued to the desktop wallpaper level on macOS and Windows, ensuring it never obstructs or steals focus from active application windows.
+- **Instant Cloud Synchronization**: Powered by Supabase PostgreSQL and real-time WebSockets to synchronize task updates across all team members in under a second.
+- **Date-Grouped Task Lists**: Intelligent chronological categorization separating Today, Tomorrow, and upcoming deadlines.
+- **Team Member Filter**: Interactive member directory showing pending task counts and client distribution per member.
+- **Interactive 2-Column Timeline**: Apple Calendar-style hourly schedule with live time tracking scrubber.
+- **1-Year Completed Task Archive**: Searchable 365-day history log with one-click task restoration.
+- **Minimalist macOS Status Bar Integration**: Native monochrome template icon with quick mode switching (Pin to Desktop, Normal Window, Always on Top).
 
 ---
 
-## 🚀 ইন্সটল করার নিয়ম (Quick Install)
+## Installation
 
-### 🍎 macOS (ম্যাকের জন্য ১-ক্লিক টার্মিনাল কমান্ড):
-টার্মিনাল ওপেন করে নিচের কোডটি পেস্ট করে এন্টার দিন:
+### macOS (One-Line Terminal Installer)
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/yahiabinzaman/team-to-do/main/install-mac.sh | bash
 ```
 
-### 🪟 Windows (উইন্ডোজের জন্য ১-ক্লিক PowerShell কমান্ড):
-PowerShell ওপেন করে নিচের কোডটি পেস্ট করে এন্টার দিন:
+### Windows (One-Line PowerShell Installer)
+
 ```powershell
 irm https://raw.githubusercontent.com/yahiabinzaman/team-to-do/main/install-windows.ps1 | iex
 ```
 
 ---
 
-## 💻 সাধারণ নিয়ম (Manual Installation)
+## Manual Setup
 
-1. **Repository ক্লোন করুন**:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/yahiabinzaman/team-to-do.git
    cd team-to-do
    ```
-2. **ডিপেন্ডেন্সি ইন্সটল করুন**:
+
+2. **Install dependencies**:
    ```bash
    npm install
    ```
-3. **উইজেট চালু করুন**:
-   - **ম্যাক**: `./mac-launcher.sh`
-   - **উইন্ডোজ**: `start-windows.bat` ফাইলে ডাবল ক্লিক করুন।
+
+3. **Configure environment variables**:
+   Create a `.env` file based on `.env.example`:
+   ```env
+   PORT=4173
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_service_role_or_anon_key
+   ```
+
+4. **Launch Application**:
+   - **macOS**: `./mac-launcher.sh`
+   - **Windows**: Run `start-windows.bat`
 
 ---
 
-## 📄 License
-This project is open-source under the [MIT License](LICENSE).
+## Tech Stack
 
-<div align="center">
-  <b>Developed by <a href="https://github.com/yahiabinzaman">Yahia Bin Zaman</a></b>
-</div>
+- **Desktop Runtime**: Electron
+- **Backend & Realtime Server**: Node.js, Express, WebSockets (`ws`)
+- **Database**: Supabase PostgreSQL
+- **Styling**: Vanilla CSS (Apple Human Interface Guidelines, Glassmorphism)
+
+---
+
+## License & Credits
+
+Distributed under the [MIT License](LICENSE).
+
+Developed and maintained by **[Yahia Bin Zaman](https://github.com/yahiabinzaman)**.

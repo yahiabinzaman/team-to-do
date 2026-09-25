@@ -137,8 +137,8 @@ function openAboutWindow() {
   } catch (e) {}
 
   aboutWindow = new BrowserWindow({
-    width: 300,
-    height: 360,
+    width: 280,
+    height: 320,
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -181,7 +181,7 @@ function openAboutWindow() {
         background: #1C1C1E;
         border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 20px;
-        padding: 22px 20px 18px;
+        padding: 20px 18px 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -203,15 +203,15 @@ function openAboutWindow() {
       }
       .close-btn:hover { background: #E0443E; }
       .app-icon {
-        width: 72px;
-        height: 72px;
-        border-radius: 17px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        margin-top: 4px;
-        margin-bottom: 12px;
+        width: 64px;
+        height: 64px;
+        border-radius: 15px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        margin-top: 2px;
+        margin-bottom: 10px;
       }
       .app-title {
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 700;
         letter-spacing: -0.3px;
         color: #FFFFFF;
@@ -220,26 +220,26 @@ function openAboutWindow() {
       .app-version {
         font-size: 11px;
         color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
       }
       .developer-block {
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 10px 14px;
+        border-radius: 10px;
+        padding: 8px 12px;
         width: 100%;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         -webkit-app-region: no-drag;
       }
       .dev-label {
-        font-size: 10px;
+        font-size: 9.5px;
         color: rgba(255, 255, 255, 0.5);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
       }
       .dev-name {
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 600;
         color: #FFFFFF;
         text-decoration: none;
@@ -257,13 +257,13 @@ function openAboutWindow() {
         background: #0A84FF;
         color: #FFFFFF;
         text-decoration: none;
-        font-size: 11.5px;
+        font-size: 11px;
         font-weight: 600;
-        padding: 7px 16px;
+        padding: 6px 14px;
         border-radius: 999px;
         transition: all 0.2s;
         -webkit-app-region: no-drag;
-        box-shadow: 0 4px 12px rgba(10, 132, 255, 0.35);
+        box-shadow: 0 4px 10px rgba(10, 132, 255, 0.35);
         cursor: pointer;
       }
       .btn-github:hover {
@@ -273,7 +273,7 @@ function openAboutWindow() {
       .copyright {
         font-size: 9px;
         color: rgba(255, 255, 255, 0.4);
-        margin-top: 12px;
+        margin-top: 10px;
       }
     </style>
   </head>
@@ -290,7 +290,7 @@ function openAboutWindow() {
       </div>
 
       <a class="btn-github" href="https://github.com/yahiabinzaman/team-to-do" target="_blank">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
         </svg>
         GitHub Repository
@@ -306,6 +306,9 @@ function openAboutWindow() {
 
   aboutWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
+    if (aboutWindow) {
+      aboutWindow.close();
+    }
     return { action: 'deny' };
   });
 
