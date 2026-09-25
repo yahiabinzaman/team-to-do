@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, screen } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -86,13 +86,19 @@ function createSystemTray() {
   if (tray) return;
 
   try {
-    const iconPath = getAppIconPath();
-    tray = new Tray(iconPath);
-    tray.setToolTip('Team Reminders Widget');
+    let trayIcon;
+    if (process.platform === 'win32') {
+      trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.ico')).resize({ width: 16, height: 16 });
+    } else {
+      trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon_512.png')).resize({ width: 18, height: 18 });
+    }
+
+    tray = new Tray(trayIcon);
+    tray.setToolTip('Team To-Do Widget');
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: ' Team Widget',
+        label: ' Team To-Do Widget',
         enabled: false
       },
       { type: 'separator' },
@@ -157,6 +163,13 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
+    // On macOS: Set dock icon or hide dock icon for true desktop widget
+    if (process.platform === 'darwin' && app.dock) {
+      try {
+        app.dock.setIcon(path.join(__dirname, 'icon_512.png'));
+      } catch (e) {}
+    }
+
     app.setLoginItemSettings({
       openAtLogin: true,
       openAsHidden: false
