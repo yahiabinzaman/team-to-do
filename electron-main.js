@@ -163,7 +163,7 @@ function updateTrayMenu() {
       }
     },
     {
-      label: 'Reset Position to Top-Left',
+      label: 'Reset Position',
       click: () => {
         if (mainWindow) {
           mainWindow.setPosition(50, 70);
@@ -173,20 +173,18 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: 'By Yahia Bin Zaman',
+      label: 'About Team To do',
       click: () => {
-        shell.openExternal('https://github.com/yahiabinzaman');
+        if (process.platform === 'darwin') {
+          app.showAboutPanel();
+        } else {
+          shell.openExternal('https://github.com/yahiabinzaman/team-to-do');
+        }
       }
     },
     {
-      label: 'GitHub: yahiabinzaman/team-to-do',
-      click: () => {
-        shell.openExternal('https://github.com/yahiabinzaman/team-to-do');
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit',
+      label: 'Quit Team To do',
+      accelerator: 'CmdOrCtrl+Q',
       click: () => {
         app.isQuiting = true;
         app.quit();
@@ -239,7 +237,19 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
-    // On macOS: Set dock icon or hide dock icon for true desktop widget
+    // Native macOS / OS About panel
+    app.setAboutPanelOptions({
+      applicationName: 'Team To do',
+      applicationVersion: '1.0.0',
+      version: '1.0.0',
+      copyright: 'Copyright © 2026 Yahia Bin Zaman',
+      credits: 'Designed & Developed by Yahia Bin Zaman',
+      authors: ['Yahia Bin Zaman'],
+      website: 'https://github.com/yahiabinzaman/team-to-do',
+      iconPath: path.join(__dirname, 'icon_512.png')
+    });
+
+    // On macOS: Set dock icon
     if (process.platform === 'darwin' && app.dock) {
       try {
         app.dock.setIcon(path.join(__dirname, 'icon_512.png'));
