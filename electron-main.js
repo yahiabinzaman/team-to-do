@@ -480,7 +480,10 @@ if (!gotTheLock) {
   app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.showInactive();
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
+      createWidgetWindow();
     }
   });
 
@@ -521,7 +524,13 @@ if (!gotTheLock) {
     createSystemTray();
 
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWidgetWindow();
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        createWidgetWindow();
+      } else {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
     });
   });
 }
