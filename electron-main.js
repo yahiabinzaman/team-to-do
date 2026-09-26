@@ -25,7 +25,7 @@ function getSavedBounds() {
       return JSON.parse(fs.readFileSync(BOUNDS_FILE, 'utf-8'));
     }
   } catch (e) {}
-  return { x: 50, y: 70, width: 340, height: 480 };
+  return { x: 40, y: 50, width: 310, height: 420 };
 }
 
 function saveBounds(bounds) {
@@ -62,12 +62,12 @@ function createWidgetWindow() {
 
   mainWindow = new BrowserWindow({
     title: 'Team To do',
-    width: saved.width || 340,
-    height: saved.height || 480,
-    x: saved.x || 50,
-    y: saved.y || 70,
-    minWidth: 280,
-    minHeight: 320,
+    width: saved.width || 310,
+    height: saved.height || 420,
+    x: saved.x || 40,
+    y: saved.y || 50,
+    minWidth: 260,
+    minHeight: 300,
     maxWidth: 900,
     maxHeight: 1000,
     frame: false,

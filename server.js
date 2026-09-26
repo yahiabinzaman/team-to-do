@@ -42,8 +42,8 @@ if (fs.existsSync(ENV_FILE)) {
 }
 
 // Supabase Cloud Configuration
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xaqmqlvuuumbimscpont.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhcW1xbHZ1dXVtYmltc2Nwb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTg3MzAsImV4cCI6MjEwNTkzNDczMH0.qZSI1sX6eHw8XAai0rgwA2b7UjJT7zOrSecyJWU8qRE';
 const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 // Ensure data directory exists
