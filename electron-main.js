@@ -512,9 +512,6 @@ function createSystemTray() {
     } else {
       const templatePath = path.join(__dirname, 'trayTemplate.png');
       trayIcon = nativeImage.createFromPath(templatePath);
-      if (trayIcon.isEmpty()) {
-        trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: 18, height: 18 });
-      }
       trayIcon.setTemplateImage(true);
     }
 
