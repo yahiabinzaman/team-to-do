@@ -7,7 +7,7 @@ APP_DIR="/Users/colorlab/Downloads/Widgets"
 cd "$APP_DIR" || exit 1
 
 # Ensure background sync server is running
-if ! curl -s --head --request GET "http://localhost:4173/api/network-info" | grep "200" > /dev/null; then
+if ! curl -s --head --request GET "http://localhost:4973/api/network-info" | grep "200" > /dev/null; then
     nohup node "$APP_DIR/server.js" > "$APP_DIR/data/widget.log" 2>&1 &
     sleep 1
 fi

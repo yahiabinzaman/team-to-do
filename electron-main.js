@@ -11,7 +11,7 @@ app.commandLine.appendSwitch('disable-background-timer-throttling');
 // Prevent crash on port in-use race condition
 process.on('uncaughtException', (err) => {
   if (err && err.code === 'EADDRINUSE') {
-    console.log('[Main Process] Port 4173 is already in use. Connected to active server.');
+    console.log('[Main Process] Port 4973 is already in use. Connected to active server.');
     return;
   }
   console.error('[Main Process Error]:', err);
@@ -49,7 +49,7 @@ function getAppIconPath() {
 
 async function ensureServerRunning() {
   try {
-    const res = await fetch('http://localhost:4173/api/employees', { signal: AbortSignal.timeout(600) });
+    const res = await fetch('http://localhost:4973/api/employees', { signal: AbortSignal.timeout(600) });
     if (res.ok) return;
   } catch (e) {}
   try {
@@ -101,14 +101,14 @@ function createWidgetWindow() {
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   }
 
-  mainWindow.loadURL('http://localhost:4173');
+  mainWindow.loadURL('http://localhost:4973');
 
   // Auto-retry connection if server is still starting up
   mainWindow.webContents.on('did-fail-load', (event, errorCode) => {
     if (errorCode !== -3) { // -3 is ABORTED, ignore
       setTimeout(() => {
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.loadURL('http://localhost:4173');
+          mainWindow.loadURL('http://localhost:4973');
         }
       }, 800);
     }
