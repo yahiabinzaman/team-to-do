@@ -1228,6 +1228,59 @@ html, body {
   border-color: #2383E2;
 }
 
+[data-theme="notion"] .task-assignee-highlight {
+  background: color-mix(in srgb, var(--emp-color, #2383E2) 16%, #FFFFFF);
+  color: color-mix(in srgb, var(--emp-color, #2383E2) 75%, #18181B);
+  border: 1px solid color-mix(in srgb, var(--emp-color, #2383E2) 32%, transparent);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1.5px 7px;
+  box-shadow: none;
+}
+
+[data-theme="notion"] .task-client-badge {
+  background: #F1F1EF;
+  color: #444442;
+  border: 1px solid rgba(55, 53, 47, 0.12);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+[data-theme="notion"] .task-time-meta {
+  color: #787774;
+  font-weight: 500;
+}
+
+[data-theme="notion"] .task-section-header {
+  color: #787774;
+  font-weight: 600;
+}
+
+[data-theme="notion"] .task-section-header.overdue {
+  color: #EB5757;
+}
+
+[data-theme="notion"] .reminder-title {
+  color: #37352F;
+}
+
+[data-theme="notion"] .member-card-apple {
+  background: #FFFFFF;
+  border: 1px solid rgba(55, 53, 47, 0.08);
+}
+[data-theme="notion"] .member-card-apple:hover {
+  background: #F7F6F5;
+}
+
+[data-theme="notion"] .member-name {
+  color: #37352F;
+}
+
+[data-theme="notion"] .member-role {
+  color: #787774;
+}
+
 [data-theme="notion"] .client-badge {
   background: #F1F1EF;
   color: #5A5A58;
@@ -1297,12 +1350,6 @@ html, body {
   border-color: #2383E2;
   color: #1B4D7E;
 }
-[data-theme="notion"] .member-card-apple {
-  background: #FFFFFF;
-  border: 1px solid rgba(55, 53, 47, 0.08);
-}
-[data-theme="notion"] .member-card-apple:hover {
-  background: #F7F6F5;
-}
+
 
 
