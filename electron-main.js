@@ -3,11 +3,18 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-//  Native macOS: Hide dock immediately so no dock icon ever appears
-if (process.platform === 'darwin' && app.dock) {
+//  Native macOS: Accessory activation policy & hide dock so no dock icon ever appears
+if (process.platform === 'darwin') {
   try {
-    app.dock.hide();
+    if (typeof app.setActivationPolicy === 'function') {
+      app.setActivationPolicy('accessory');
+    }
   } catch (e) {}
+  if (app.dock) {
+    try {
+      app.dock.hide();
+    } catch (e) {}
+  }
 }
 
 // Handle system shutdown, restart, and quit signals gracefully without blocking macOS
@@ -129,7 +136,7 @@ function createWidgetWindow() {
     hasShadow: false,
     resizable: true,
     alwaysOnTop: false,
-    show: true,
+    show: false,
     skipTaskbar: true,
     icon: iconPath,
     backgroundColor: '#00000000',
@@ -144,6 +151,9 @@ function createWidgetWindow() {
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+    if (mainWindow.setHiddenInMissionControl) {
+      mainWindow.setHiddenInMissionControl(true);
+    }
   }
 
   // Restore saved window mode
@@ -171,10 +181,12 @@ function createWidgetWindow() {
     }
   });
 
-  // Open window smoothly when ready
+  // Open window smoothly when ready without showing Dock icon
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
+    mainWindow.showInactive();
+    if (process.platform === 'darwin' && app.dock) {
+      try { app.dock.hide(); } catch (e) {}
+    }
   });
 
   // Save bounds on move/resize
@@ -460,8 +472,10 @@ function updateTrayMenu() {
         } else if (mainWindow.isVisible()) {
           mainWindow.hide();
         } else {
-          mainWindow.show();
-          mainWindow.focus();
+          mainWindow.showInactive();
+          if (process.platform === 'darwin' && app.dock) {
+            try { app.dock.hide(); } catch (e) {}
+          }
         }
         updateTrayMenu();
       }
@@ -563,11 +577,18 @@ if (!gotTheLock) {
       iconPath: path.join(__dirname, 'icon_512.png')
     });
 
-    // On macOS: Hide dock icon (runs cleanly as lightweight desktop widget & menu-bar status icon)
-    if (process.platform === 'darwin' && app.dock) {
+    // On macOS: Set accessory policy and hide dock icon
+    if (process.platform === 'darwin') {
       try {
-        app.dock.hide();
+        if (typeof app.setActivationPolicy === 'function') {
+          app.setActivationPolicy('accessory');
+        }
       } catch (e) {}
+      if (app.dock) {
+        try {
+          app.dock.hide();
+        } catch (e) {}
+      }
     }
 
     app.setLoginItemSettings({
