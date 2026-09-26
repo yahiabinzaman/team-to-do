@@ -193,8 +193,6 @@ function createWidgetWindow() {
   });
 }
 
-let currentWindowMode = 'normal'; // 'desktop' | 'normal' | 'always-on-top'
-
 function applyWindowMode(mode) {
   currentWindowMode = mode;
   if (!mainWindow) return;
