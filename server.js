@@ -15,7 +15,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 4973;
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.APPDATA_DIR || path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const ENV_FILE = path.join(__dirname, '.env');
 

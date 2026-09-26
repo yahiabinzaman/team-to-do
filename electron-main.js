@@ -42,23 +42,40 @@ process.on('uncaughtException', (err) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BOUNDS_FILE = path.join(__dirname, 'data', 'bounds.json');
 let mainWindow;
 let tray = null;
+let currentWindowMode = 'normal'; // 'desktop' | 'normal' | 'always-on-top'
+
+function getBoundsFilePath() {
+  try {
+    const userDir = app.getPath('userData');
+    return path.join(userDir, 'bounds.json');
+  } catch (e) {
+    return path.join(__dirname, 'data', 'bounds.json');
+  }
+}
 
 function getSavedBounds() {
   try {
-    if (fs.existsSync(BOUNDS_FILE)) {
-      return JSON.parse(fs.readFileSync(BOUNDS_FILE, 'utf-8'));
+    const file = getBoundsFilePath();
+    if (fs.existsSync(file)) {
+      return JSON.parse(fs.readFileSync(file, 'utf-8'));
     }
   } catch (e) {}
-  return { x: 40, y: 50, width: 310, height: 420 };
+  return { x: 40, y: 50, width: 310, height: 420, mode: 'normal' };
 }
 
 function saveBounds(bounds) {
   try {
-    fs.mkdirSync(path.dirname(BOUNDS_FILE), { recursive: true });
-    fs.writeFileSync(BOUNDS_FILE, JSON.stringify(bounds, null, 2), 'utf-8');
+    const file = getBoundsFilePath();
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const current = getSavedBounds();
+    const dataToSave = {
+      ...current,
+      ...bounds,
+      mode: currentWindowMode
+    };
+    fs.writeFileSync(file, JSON.stringify(dataToSave, null, 2), 'utf-8');
   } catch (e) {}
 }
 
@@ -70,6 +87,9 @@ function getAppIconPath() {
 }
 
 async function ensureServerRunning() {
+  try {
+    process.env.APPDATA_DIR = app.getPath('userData');
+  } catch (e) {}
   try {
     const res = await fetch('http://localhost:4973/api/employees', { signal: AbortSignal.timeout(600) });
     if (res.ok) return;
@@ -83,6 +103,13 @@ async function ensureServerRunning() {
 
 function createWidgetWindow() {
   if (mainWindow) return;
+
+  // On macOS: Hide dock immediately
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      app.dock.hide();
+    } catch (e) {}
+  }
 
   const saved = getSavedBounds();
   const iconPath = getAppIconPath();
@@ -103,6 +130,7 @@ function createWidgetWindow() {
     resizable: true,
     alwaysOnTop: false,
     show: true,
+    skipTaskbar: true,
     icon: iconPath,
     backgroundColor: '#00000000',
     webPreferences: {
@@ -116,6 +144,11 @@ function createWidgetWindow() {
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+  }
+
+  // Restore saved window mode
+  if (saved.mode) {
+    applyWindowMode(saved.mode);
   }
 
   mainWindow.loadURL('http://localhost:4973');
@@ -394,9 +427,11 @@ function openAboutWindow() {
 function updateTrayMenu() {
   if (!tray) return;
 
+  const isVisible = mainWindow && mainWindow.isVisible();
+
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Team To do',
+      label: 'Team To do • Yahia Bin Zaman',
       enabled: false
     },
     { type: 'separator' },
@@ -420,15 +455,17 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: 'Show / Hide Widget',
+      label: isVisible ? 'Hide Widget' : 'Show Widget',
       click: () => {
         if (!mainWindow) {
           createWidgetWindow();
         } else if (mainWindow.isVisible()) {
           mainWindow.hide();
         } else {
-          mainWindow.showInactive();
+          mainWindow.show();
+          mainWindow.focus();
         }
+        updateTrayMenu();
       }
     },
     {
@@ -442,11 +479,18 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
+      label: 'GitHub Repository ↗',
+      click: () => {
+        shell.openExternal('https://github.com/yahiabinzaman/team-to-do');
+      }
+    },
+    {
       label: 'About Team To do',
       click: () => {
         openAboutWindow();
       }
     },
+    { type: 'separator' },
     {
       label: 'Quit Team To do',
       accelerator: 'CmdOrCtrl+Q',
@@ -469,7 +513,10 @@ function createSystemTray() {
       trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.ico')).resize({ width: 16, height: 16 });
     } else {
       const templatePath = path.join(__dirname, 'trayTemplate.png');
-      trayIcon = nativeImage.createFromPath(templatePath).resize({ width: 18, height: 18 });
+      trayIcon = nativeImage.createFromPath(templatePath);
+      if (trayIcon.isEmpty()) {
+        trayIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: 18, height: 18 });
+      }
       trayIcon.setTemplateImage(true);
     }
 
@@ -478,19 +525,13 @@ function createSystemTray() {
     updateTrayMenu();
 
     tray.on('click', () => {
-      if (mainWindow) {
-        if (mainWindow.isVisible()) {
-          mainWindow.hide();
-        } else {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      } else {
-        createWidgetWindow();
-      }
+      tray.popUpContextMenu();
+    });
+    tray.on('right-click', () => {
+      tray.popUpContextMenu();
     });
   } catch (err) {
-    console.error('Tray initialization notice:', err);
+    console.error('Tray initialization error:', err);
   }
 }
 
