@@ -80,7 +80,7 @@ function createWidgetWindow() {
     hasShadow: false,
     resizable: true,
     alwaysOnTop: false,
-    show: false,
+    show: true,
     icon: iconPath,
     backgroundColor: '#00000000',
     webPreferences: {
@@ -119,6 +119,7 @@ function createWidgetWindow() {
   // Open window smoothly when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    mainWindow.focus();
   });
 
   // Save bounds on move/resize
@@ -137,7 +138,7 @@ function createWidgetWindow() {
   });
 }
 
-let currentWindowMode = 'desktop'; // 'desktop' | 'normal' | 'always-on-top'
+let currentWindowMode = 'normal'; // 'desktop' | 'normal' | 'always-on-top'
 
 function applyWindowMode(mode) {
   currentWindowMode = mode;
@@ -457,10 +458,13 @@ function createSystemTray() {
     tray.on('click', () => {
       if (mainWindow) {
         if (mainWindow.isVisible()) {
-          mainWindow.showInactive();
+          mainWindow.hide();
         } else {
-          mainWindow.showInactive();
+          mainWindow.show();
+          mainWindow.focus();
         }
+      } else {
+        createWidgetWindow();
       }
     });
   } catch (err) {
