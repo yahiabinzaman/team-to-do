@@ -839,7 +839,28 @@ async function fetchNetworkInfo() {
   } catch (e) {}
 }
 
+function setAppTheme(theme = 'apple') {
+  const root = document.documentElement;
+  if (theme === 'notion') {
+    root.setAttribute('data-theme', 'notion');
+    localStorage.setItem('team_todo_theme', 'notion');
+    document.getElementById('btnThemeApple')?.classList.remove('active');
+    document.getElementById('btnThemeNotion')?.classList.add('active');
+  } else {
+    root.setAttribute('data-theme', 'dark');
+    localStorage.setItem('team_todo_theme', 'apple');
+    document.getElementById('btnThemeApple')?.classList.add('active');
+    document.getElementById('btnThemeNotion')?.classList.remove('active');
+  }
+}
+
+function initAppTheme() {
+  const saved = localStorage.getItem('team_todo_theme') || 'apple';
+  setAppTheme(saved);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  initAppTheme();
   initWebSocket();
   setInterval(renderTimelineView, 60000);
 });

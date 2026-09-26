@@ -93,11 +93,6 @@ function createWidgetWindow() {
   // Hide traffic lights and set desktop widget behavior on macOS
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
-    // Setting level to 'desktop' keeps the widget on the desktop behind all normal application windows
-    // It will never pop over or obstruct open apps
-    try {
-      mainWindow.setLevel('desktop');
-    } catch (e) {}
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
   }
 
@@ -121,9 +116,9 @@ function createWidgetWindow() {
     }
   });
 
-  // Open quietly in desktop background without popping over active windows
+  // Open window smoothly when ready
   mainWindow.once('ready-to-show', () => {
-    mainWindow.showInactive();
+    mainWindow.show();
   });
 
   // Save bounds on move/resize

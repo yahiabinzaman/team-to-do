@@ -200,6 +200,20 @@
         </div>
 
         <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
+          <div class="modal-section-title">App Theme</div>
+          <div class="theme-selector-grid">
+            <button type="button" class="theme-choice-btn active" id="btnThemeApple" onclick="setAppTheme('apple')">
+              <span class="theme-dot dot-apple"></span>
+              <span class="theme-btn-title">Apple Dark</span>
+            </button>
+            <button type="button" class="theme-choice-btn" id="btnThemeNotion" onclick="setAppTheme('notion')">
+              <span class="theme-dot dot-notion"></span>
+              <span class="theme-btn-title">Notion Clean</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
           <div class="modal-section-title">Real-Time Sync</div>
           <div id="syncPeerCountBadge" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">● Live Synced</div>
           <div id="settingsLanUrls" style="font-size:9.5px; font-family:ui-monospace, monospace; color:var(--text-tertiary); margin-top:4px; word-break:break-all;"></div>
