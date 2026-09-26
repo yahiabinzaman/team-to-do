@@ -35,6 +35,9 @@
     "mac": {
       "icon": "app.icns",
       "identity": null,
+      "extendInfo": {
+        "LSUIElement": true
+      },
       "target": [
         "dmg",
         "zip"

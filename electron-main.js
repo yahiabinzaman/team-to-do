@@ -505,10 +505,10 @@ if (!gotTheLock) {
       iconPath: path.join(__dirname, 'icon_512.png')
     });
 
-    // On macOS: Set dock icon
+    // On macOS: Hide dock icon (runs cleanly as lightweight desktop widget & menu-bar status icon)
     if (process.platform === 'darwin' && app.dock) {
       try {
-        app.dock.setIcon(path.join(__dirname, 'icon_512.png'));
+        app.dock.hide();
       } catch (e) {}
     }
 
