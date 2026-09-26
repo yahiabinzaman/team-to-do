@@ -1267,18 +1267,43 @@ html, body {
 
 [data-theme="notion"] .member-card-apple {
   background: #FFFFFF;
-  border: 1px solid rgba(55, 53, 47, 0.08);
+  border: 1px solid rgba(55, 53, 47, 0.1);
+  border-radius: 8px;
 }
 [data-theme="notion"] .member-card-apple:hover {
   background: #F7F6F5;
+  border-color: rgba(55, 53, 47, 0.18);
 }
 
+[data-theme="notion"] .member-name-text,
 [data-theme="notion"] .member-name {
   color: #37352F;
+  font-weight: 600;
 }
 
+[data-theme="notion"] .member-role-sub,
 [data-theme="notion"] .member-role {
   color: #787774;
+}
+
+[data-theme="notion"] .member-avatar-circle {
+  background: #EBEAE8;
+  border: 1px solid rgba(55, 53, 47, 0.14);
+  color: #37352F;
+  font-weight: 700;
+}
+
+[data-theme="notion"] .member-task-count-badge {
+  background: #F1F1EF;
+  color: #5A5A58;
+  border: 1px solid rgba(55, 53, 47, 0.08);
+}
+
+[data-theme="notion"] .member-client-pill {
+  background: #F1F1EF;
+  color: #5A5A58;
+  border: 1px solid rgba(55, 53, 47, 0.08);
+  border-radius: 4px;
 }
 
 [data-theme="notion"] .client-badge {
@@ -1301,17 +1326,82 @@ html, body {
   color: #787774;
 }
 
+/* Timeline in Notion Theme */
+[data-theme="notion"] .cal-day-label {
+  color: #EB5757;
+}
+[data-theme="notion"] .cal-date-number {
+  color: #37352F;
+}
+[data-theme="notion"] .cal-tomorrow-label {
+  color: #787774;
+}
+[data-theme="notion"] .cal-hour-row {
+  border-top: 1px solid rgba(55, 53, 47, 0.08);
+}
+[data-theme="notion"] .cal-hour-row:hover {
+  background: #F7F6F5;
+}
+[data-theme="notion"] .cal-hour-num {
+  color: #787774;
+}
+[data-theme="notion"] .cal-event-chip {
+  background: #F1F1EF;
+  color: #37352F;
+  border-left: 3px solid #2383E2;
+  border-radius: 3px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.05);
+}
+[data-theme="notion"] .cal-event-chip:hover {
+  background: #EBEAE8;
+}
+
+/* Segmented Date Bar & Modals in Notion Theme */
+[data-theme="notion"] .apple-segmented-date-bar {
+  background: #F1F1EF;
+  border: 1px solid rgba(55, 53, 47, 0.1);
+  border-radius: 6px;
+  padding: 2.5px;
+}
+[data-theme="notion"] .apple-segmented-date-bar .date-chip {
+  color: #787774;
+  font-weight: 500;
+}
+[data-theme="notion"] .apple-segmented-date-bar .date-chip:hover {
+  color: #37352F;
+}
+[data-theme="notion"] .apple-segmented-date-bar .date-chip.active {
+  background: #FFFFFF;
+  color: #37352F;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 15, 15, 0.1);
+}
+
 [data-theme="notion"] .apple-modal {
   background: #FFFFFF;
   border: 1px solid rgba(55, 53, 47, 0.13);
   box-shadow: 0 16px 40px rgba(15, 15, 15, 0.18), 0 0 0 1px rgba(15, 15, 15, 0.08);
   border-radius: 12px;
 }
+[data-theme="notion"] .modal-title {
+  color: #37352F;
+}
+[data-theme="notion"] .modal-subtitle {
+  color: #787774;
+}
+[data-theme="notion"] .form-label {
+  color: #37352F;
+  font-weight: 600;
+}
 [data-theme="notion"] .form-input,
 [data-theme="notion"] .form-select {
   background: #FFFFFF;
   border: 1px solid rgba(55, 53, 47, 0.18);
   color: #37352F;
+}
+[data-theme="notion"] .form-input::placeholder {
+  color: rgba(55, 53, 47, 0.38);
 }
 [data-theme="notion"] .form-input:focus,
 [data-theme="notion"] .form-select:focus {
@@ -1349,6 +1439,15 @@ html, body {
   background: #EBF5FB;
   border-color: #2383E2;
   color: #1B4D7E;
+}
+
+[data-theme="notion"] .history-search-input {
+  background: #F7F6F5;
+  border: 1px solid rgba(55, 53, 47, 0.14);
+  color: #37352F;
+}
+[data-theme="notion"] .history-stats-badge {
+  color: #0F7B6C;
 }
 
 
