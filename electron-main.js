@@ -3,6 +3,28 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+//  Native macOS: Hide dock immediately so no dock icon ever appears
+if (process.platform === 'darwin' && app.dock) {
+  try {
+    app.dock.hide();
+  } catch (e) {}
+}
+
+// Handle system shutdown, restart, and quit signals gracefully without blocking macOS
+app.on('before-quit', () => {
+  app.isQuiting = true;
+});
+
+process.on('SIGTERM', () => {
+  app.isQuiting = true;
+  app.exit(0);
+});
+
+process.on('SIGINT', () => {
+  app.isQuiting = true;
+  app.exit(0);
+});
+
 // Hardware acceleration & performance switches for Windows & macOS
 app.commandLine.appendSwitch('enable-smooth-scrolling');
 app.commandLine.appendSwitch('force-color-profile', 'srgb');
