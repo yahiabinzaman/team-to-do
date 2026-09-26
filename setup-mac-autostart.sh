@@ -6,6 +6,7 @@ PLIST_PATH="$HOME/Library/LaunchAgents/com.applewidget.desktop.plist"
 LAUNCHER_PATH="$CURRENT_DIR/mac-launcher.sh"
 
 echo "🍏 Setting up macOS Login Auto-Start LaunchAgent..."
+mkdir -p "$HOME/Library/LaunchAgents"
 
 cat <<EOF > "$PLIST_PATH"
 <?xml version="1.0" encoding="UTF-8"?>
