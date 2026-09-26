@@ -3,6 +3,11 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+// Hardware acceleration & performance switches for Windows & macOS
+app.commandLine.appendSwitch('enable-smooth-scrolling');
+app.commandLine.appendSwitch('force-color-profile', 'srgb');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+
 // Prevent crash on port in-use race condition
 process.on('uncaughtException', (err) => {
   if (err && err.code === 'EADDRINUSE') {
@@ -109,6 +114,13 @@ function createWidgetWindow() {
     }
   });
 
+  // Prevent accidental zoom changes via Ctrl + +/- or Ctrl + MouseWheel on Windows
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && (input.key === '+' || input.key === '-' || input.key === '=' || input.key === '0')) {
+      event.preventDefault();
+    }
+  });
+
   // Open quietly in desktop background without popping over active windows
   mainWindow.once('ready-to-show', () => {
     mainWindow.showInactive();
@@ -117,6 +129,13 @@ function createWidgetWindow() {
   // Save bounds on move/resize
   mainWindow.on('moved', () => saveBounds(mainWindow.getBounds()));
   mainWindow.on('resized', () => saveBounds(mainWindow.getBounds()));
+
+  mainWindow.on('close', (event) => {
+    if (!app.isQuiting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
