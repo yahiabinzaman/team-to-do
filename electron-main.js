@@ -205,36 +205,39 @@ function createWidgetWindow() {
 
 function applyWindowMode(mode) {
   currentWindowMode = mode;
-  if (!mainWindow) return;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
 
   if (mode === 'desktop') {
     mainWindow.setAlwaysOnTop(false);
     if (process.platform === 'darwin') {
       try {
-        mainWindow.setLevel('desktop');
         mainWindow.setVisibleOnAllWorkspaces(false);
-        if (mainWindow.setFullScreenable) {
+        if (typeof mainWindow.setFullScreenable === 'function') {
           mainWindow.setFullScreenable(false);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Window mode error:', e);
+      }
     }
   } else if (mode === 'always-on-top') {
+    mainWindow.setAlwaysOnTop(true, 'floating');
     if (process.platform === 'darwin') {
       try {
-        mainWindow.setLevel('floating');
         mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Window mode error:', e);
+      }
     }
-    mainWindow.setAlwaysOnTop(true, 'floating');
   } else {
     // normal window
+    mainWindow.setAlwaysOnTop(false);
     if (process.platform === 'darwin') {
       try {
-        mainWindow.setLevel('normal');
         mainWindow.setVisibleOnAllWorkspaces(false);
-      } catch (e) {}
+      } catch (e) {
+        console.error('Window mode error:', e);
+      }
     }
-    mainWindow.setAlwaysOnTop(false);
   }
   updateTrayMenu();
 }
