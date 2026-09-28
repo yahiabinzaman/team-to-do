@@ -51,7 +51,7 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 let tray = null;
-let currentWindowMode = 'normal'; // 'desktop' | 'normal' | 'always-on-top'
+let currentWindowMode = 'desktop'; // 'desktop' | 'normal' | 'always-on-top'
 
 function getBoundsFilePath() {
   try {
@@ -69,7 +69,7 @@ function getSavedBounds() {
       return JSON.parse(fs.readFileSync(file, 'utf-8'));
     }
   } catch (e) {}
-  return { x: 40, y: 50, width: 310, height: 420, mode: 'normal' };
+  return { x: 40, y: 50, width: 310, height: 420, mode: 'desktop' };
 }
 
 function saveBounds(bounds) {
@@ -150,16 +150,14 @@ function createWidgetWindow() {
   // Hide traffic lights and set desktop widget behavior on macOS
   if (process.platform === 'darwin') {
     mainWindow.setWindowButtonVisibility(false);
-    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+    mainWindow.setVisibleOnAllWorkspaces(false);
     if (mainWindow.setHiddenInMissionControl) {
       mainWindow.setHiddenInMissionControl(true);
     }
   }
 
   // Restore saved window mode
-  if (saved.mode) {
-    applyWindowMode(saved.mode);
-  }
+  applyWindowMode(saved.mode || 'desktop');
 
   mainWindow.loadURL('http://localhost:4973');
 
@@ -214,20 +212,26 @@ function applyWindowMode(mode) {
     if (process.platform === 'darwin') {
       try {
         mainWindow.setLevel('desktop');
+        mainWindow.setVisibleOnAllWorkspaces(false);
+        if (mainWindow.setFullScreenable) {
+          mainWindow.setFullScreenable(false);
+        }
       } catch (e) {}
     }
   } else if (mode === 'always-on-top') {
     if (process.platform === 'darwin') {
       try {
-        mainWindow.setLevel('normal');
+        mainWindow.setLevel('floating');
+        mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       } catch (e) {}
     }
     mainWindow.setAlwaysOnTop(true, 'floating');
   } else {
-    // normal
+    // normal window
     if (process.platform === 'darwin') {
       try {
         mainWindow.setLevel('normal');
+        mainWindow.setVisibleOnAllWorkspaces(false);
       } catch (e) {}
     }
     mainWindow.setAlwaysOnTop(false);
