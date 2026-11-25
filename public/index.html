@@ -333,7 +333,7 @@
 
     <div class="settings-tab-bar" role="tablist" aria-label="Settings Sections">
       <button type="button" role="tab" aria-selected="true" class="settings-tab-btn active" id="btnSettingsGeneral" onclick="switchSettingsTab('general')">General</button>
-      <button type="button" role="tab" aria-selected="false" class="settings-tab-btn" id="btnSettingsAlerts" onclick="switchSettingsTab('alerts')">WhatsApp &amp; Mail</button>
+      <button type="button" role="tab" aria-selected="false" class="settings-tab-btn" id="btnSettingsAlerts" onclick="switchSettingsTab('alerts')">Alerts</button>
     </div>
 
     <div id="settingsTabGeneral" class="settings-scroll-body">
@@ -368,7 +368,7 @@
       <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.2.1</div>
+            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.2.2</div>
             <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
           </div>
           <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
@@ -402,6 +402,25 @@
       </div>
 
       <div class="notify-card">
+        <label class="notify-toggle-row" for="notifyTgEnabledCheck">
+          <span>Telegram Bot (Free Forever)</span>
+          <input type="checkbox" class="apple-switch" id="notifyTgEnabledCheck">
+        </label>
+        <div class="form-group">
+          <label class="form-label" for="notifyTgTokenInput">Bot Token (from @BotFather)</label>
+          <input type="password" class="form-input" id="notifyTgTokenInput" placeholder="123456:ABC...">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="notifyTgChatIdInput">Chat ID</label>
+          <div class="form-row-2col" style="align-items:center;">
+            <input type="text" class="form-input" id="notifyTgChatIdInput" placeholder="Click Detect ID" style="flex:1;">
+            <button type="button" class="btn-apple-cancel" id="btnDetectTgChat" onclick="detectTelegramChat()" style="padding:5px 10px; font-size:10.5px; flex-shrink:0;">Detect ID</button>
+          </div>
+        </div>
+        <div class="notify-hint">1. Send <code>/newbot</code> to <strong>@BotFather</strong> → paste Token.<br>2. Open your bot &amp; send <code>hi</code> → click <strong>Detect ID</strong>.</div>
+      </div>
+
+      <div class="notify-card">
         <label class="notify-toggle-row" for="notifyEmailEnabledCheck">
           <span>Email (Gmail SMTP)</span>
           <input type="checkbox" class="apple-switch" id="notifyEmailEnabledCheck">
@@ -423,14 +442,14 @@
 
       <div class="notify-card">
         <label class="notify-toggle-row" for="notifyWaEnabledCheck">
-          <span>WhatsApp Auto Alert</span>
+          <span>WhatsApp (Optional)</span>
           <input type="checkbox" class="apple-switch" id="notifyWaEnabledCheck">
         </label>
         <div class="form-group">
           <label class="form-label" for="notifyWaProviderSelect">Provider</label>
           <div class="custom-select-wrapper">
             <select class="form-select" id="notifyWaProviderSelect" onchange="updateWaProviderHint()">
-              <option value="textmebot">TextMeBot (Recommended)</option>
+              <option value="textmebot">TextMeBot</option>
               <option value="callmebot">CallMeBot</option>
             </select>
           </div>
@@ -443,24 +462,7 @@
           <label class="form-label" for="notifyWaKeyInput">API Key</label>
           <input type="password" class="form-input" id="notifyWaKeyInput" placeholder="API Key">
         </div>
-        <div class="notify-hint" id="notifyWaHint">Get key at textmebot.com, add phone, then click <strong>Connect Number</strong> on TextMeBot.</div>
-      </div>
-
-      <div class="notify-card">
-        <label class="notify-toggle-row" for="notifyTgEnabledCheck">
-          <span>Telegram Bot (Optional)</span>
-          <input type="checkbox" class="apple-switch" id="notifyTgEnabledCheck">
-        </label>
-        <div class="form-row-2col">
-          <div class="form-group" style="flex:1;">
-            <label class="form-label" for="notifyTgTokenInput">Bot Token</label>
-            <input type="password" class="form-input" id="notifyTgTokenInput" placeholder="123456:ABC...">
-          </div>
-          <div class="form-group" style="flex:0.8;">
-            <label class="form-label" for="notifyTgChatIdInput">Chat ID</label>
-            <input type="text" class="form-input" id="notifyTgChatIdInput" placeholder="123456789">
-          </div>
-        </div>
+        <div class="notify-hint" id="notifyWaHint">Optional third-party WhatsApp gateway.</div>
       </div>
 
       <div class="notify-card">

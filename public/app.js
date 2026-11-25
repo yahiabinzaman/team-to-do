@@ -1413,6 +1413,38 @@ async function loadNotifyConfig() {
   } catch (e) {}
 }
 
+async function detectTelegramChat() {
+  const btn = document.getElementById('btnDetectTgChat');
+  const token = document.getElementById('notifyTgTokenInput')?.value.trim() || '';
+  if (btn) btn.disabled = true;
+  setNotifyStatus('Checking Telegram bot...');
+  try {
+    const res = await fetch('/api/notifications/telegram-detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramBotToken: token })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      setNotifyStatus(data.error || 'Could not detect Chat ID.', true);
+      return;
+    }
+    document.getElementById('notifyTgEnabledCheck').checked = true;
+    document.getElementById('notifyTgChatIdInput').value = data.chatId || '';
+    const tokenEl = document.getElementById('notifyTgTokenInput');
+    if (tokenEl) {
+      tokenEl.value = '';
+      tokenEl.placeholder = 'Saved (leave blank to keep)';
+    }
+    setNotifyStatus(`✓ Connected ${data.botUsername ? '@' + data.botUsername + ' → ' : ''}${data.chatLabel} (${data.chatId})`);
+    if (window.appleSounds) window.appleSounds.playComplete();
+  } catch (e) {
+    setNotifyStatus('Network error checking Telegram.', true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function shareSummaryToWhatsApp() {
   try {
     const scope = document.getElementById('notifyScopeSelect')?.value || 'keyring_and_active';

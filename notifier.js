@@ -326,6 +326,43 @@ export async function sendWhatsAppDigest({ cfg, digest }) {
   }
 }
 
+export async function detectTelegramChatId(botToken) {
+  const token = String(botToken || '').trim();
+  if (!token) throw new Error('Enter your Telegram Bot Token first');
+
+  const meRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/getMe`, {
+    signal: AbortSignal.timeout(10000)
+  });
+  const meData = await meRes.json().catch(() => ({}));
+  if (!meRes.ok || !meData.ok) {
+    throw new Error(meData.description || 'Invalid Telegram Bot Token');
+  }
+
+  const updRes = await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/getUpdates?limit=25`, {
+    signal: AbortSignal.timeout(10000)
+  });
+  const updData = await updRes.json().catch(() => ({}));
+  if (!updRes.ok || !updData.ok) {
+    throw new Error(updData.description || 'Could not fetch Telegram updates');
+  }
+
+  const updates = Array.isArray(updData.result) ? updData.result : [];
+  for (let i = updates.length - 1; i >= 0; i--) {
+    const u = updates[i];
+    const chat = u.message?.chat || u.edited_message?.chat || u.channel_post?.chat || u.my_chat_member?.chat;
+    if (chat && chat.id !== undefined) {
+      return {
+        botUsername: meData.result?.username || '',
+        chatId: String(chat.id),
+        chatLabel: chat.title || [chat.first_name, chat.last_name].filter(Boolean).join(' ') || chat.username || String(chat.id)
+      };
+    }
+  }
+
+  const botHint = meData.result?.username ? `@${meData.result.username}` : 'your new bot';
+  throw new Error(`Open ${botHint} in Telegram, tap Start (send "hi"), then click Detect ID again.`);
+}
+
 export async function sendTelegramDigest({ cfg, digest }) {
   if (!cfg.telegramBotToken || !cfg.telegramChatId) {
     throw new Error('Missing Telegram Bot Token or Chat ID');

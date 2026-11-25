@@ -13,6 +13,7 @@ import {
   mergeNotifyConfig,
   buildOrderDigest,
   dispatchDigest,
+  detectTelegramChatId,
   startNotifyScheduler
 } from './notifier.js';
 
@@ -676,6 +677,26 @@ app.get('/api/notifications/preview', (req, res) => {
   const scope = req.query.scope === 'keyring_only' ? 'keyring_only' : 'keyring_and_active';
   const digest = buildOrderDigest(currentStore, scope);
   res.json({ success: true, digest: { subject: digest.subject, text: digest.whatsappText, counts: digest.counts } });
+});
+
+app.post('/api/notifications/telegram-detect', async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ success: false, error: 'Local device access only' });
+  }
+  try {
+    const existing = readNotifyConfig(DATA_DIR);
+    const token = String(req.body?.telegramBotToken || '').trim() || existing.telegramBotToken;
+    const detected = await detectTelegramChatId(token);
+    const next = mergeNotifyConfig(existing, {
+      telegramEnabled: true,
+      telegramBotToken: token,
+      telegramChatId: detected.chatId
+    });
+    writeNotifyConfig(DATA_DIR, next);
+    res.json({ success: true, ...detected, config: maskNotifyConfig(next) });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err?.message || 'Failed to detect Chat ID' });
+  }
 });
 
 app.post('/api/notifications/send-now', async (req, res) => {
