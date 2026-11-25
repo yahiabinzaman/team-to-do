@@ -40,6 +40,7 @@ export function defaultNotifyConfig() {
     telegramEnabled: false,
     telegramBotToken: '',
     telegramChatId: '',
+    lastTelegramUpdateId: 0,
     webhookUrl: '',
     lastSentDate: ''
   };
@@ -363,24 +364,176 @@ export async function detectTelegramChatId(botToken) {
   throw new Error(`Open ${botHint} in Telegram, tap Start (send "hi"), then click Detect ID again.`);
 }
 
-export async function sendTelegramDigest({ cfg, digest }) {
-  if (!cfg.telegramBotToken || !cfg.telegramChatId) {
+const TELEGRAM_KEYBOARD = {
+  keyboard: [
+    [{ text: '🔑 Keyring' }, { text: '📊 Full Update' }],
+    [{ text: '🖨️ Printing' }, { text: '📦 Ordered' }, { text: '🛠️ Needs Work' }]
+  ],
+  resize_keyboard: true
+};
+
+const STAGE_LABELS = {
+  ordered: '📦 Ordered',
+  work: '🛠️ Needs Work',
+  printing: '🖨️ In Printing',
+  delivered: '✅ Delivered'
+};
+
+export function buildTelegramReply(store, incomingText) {
+  const raw = String(incomingText || '').trim();
+  const q = raw.toLowerCase();
+  const tasks = Array.isArray(store?.tasks) ? store.tasks : [];
+  const employees = Array.isArray(store?.employees) ? store.employees : [];
+  const empMap = new Map(employees.map(e => [e.id, e.name]));
+
+  const active = tasks.filter(t => !t.completed && t.stage !== 'delivered');
+  const delivered = tasks.filter(t => t.completed || t.stage === 'delivered');
+  const todayStr = getLocalISODate();
+  const deliveredToday = delivered.filter(t => (t.completedAt || t.updatedAt || '').startsWith(todayStr));
+
+  const formatRows = (list, includeStage = false, limit = 30) => {
+    if (!list.length) return '• None';
+    const shown = list.slice(0, limit).map(t => {
+      const base = formatLineItem(t, empMap);
+      return includeStage ? `${base} — ${STAGE_LABELS[t.stage] || '🛠️ Needs Work'}` : base;
+    });
+    if (list.length > limit) shown.push(`... +${list.length - limit} more`);
+    return shown.join('\n');
+  };
+
+  if (q === '/start' || q === '/help' || q === 'help') {
+    return [
+      '👋 Team To do Live Assistant Ready!',
+      '',
+      'Ask anytime by tapping a button below or typing:',
+      '• keyring — Keyring work & printing status',
+      '• update — Full active order summary',
+      '• printing — Orders currently in printing',
+      '• ordered — Newly ordered items',
+      '• work — All pending work',
+      '• delivered — Delivered today & recent',
+      '• Or type any madrasa/client name (e.g. "Al Ashraf") to search!'
+    ].join('\n');
+  }
+
+  if (q.includes('keyring') || q === '/key' || q === 'key' || q.startsWith('🔑')) {
+    const keyrings = active.filter(isKeyringTask);
+    const kWork = keyrings.filter(t => t.stage === 'work');
+    const kOrdered = keyrings.filter(t => t.stage === 'ordered');
+    const kPrinting = keyrings.filter(t => t.stage === 'printing');
+    const kDeliveredToday = deliveredToday.filter(isKeyringTask);
+
+    const out = [
+      `🔑 Keyring Live Status`,
+      `• Needs Work: ${kWork.length}`,
+      `• Ordered: ${kOrdered.length}`,
+      `• In Printing: ${kPrinting.length}`,
+      `• Delivered Today: ${kDeliveredToday.length}`,
+      ''
+    ];
+    if (kWork.length) out.push(`🛠️ Needs Work (${kWork.length}):\n${formatRows(kWork)}\n`);
+    if (kOrdered.length) out.push(`📦 Ordered (${kOrdered.length}):\n${formatRows(kOrdered)}\n`);
+    if (kPrinting.length) out.push(`🖨️ In Printing (${kPrinting.length}):\n${formatRows(kPrinting)}\n`);
+    if (!keyrings.length) out.push('✅ All Keyrings are delivered!');
+    return out.join('\n').trim().slice(0, 3900);
+  }
+
+  if (q === '/printing' || q === 'printing' || q === 'print' || q.startsWith('🖨️') || /\bprint(ing)?\b/.test(q)) {
+    const list = active.filter(t => t.stage === 'printing');
+    return `🖨️ In Printing (${list.length}):\n${formatRows(list)}`.slice(0, 3900);
+  }
+
+  if (q === '/ordered' || q === 'ordered' || q === 'order' || q.startsWith('📦') || /\border(ed)?\b/.test(q)) {
+    const list = active.filter(t => t.stage === 'ordered');
+    return `📦 Ordered (${list.length}):\n${formatRows(list)}`.slice(0, 3900);
+  }
+
+  if (q === '/work' || q === 'work' || q === 'todo' || q === 'kaj' || q === 'baki' || q.startsWith('🛠️') || /\b(kaj|baki|work)\b/.test(q)) {
+    const list = active.filter(t => t.stage === 'work');
+    return `🛠️ Needs Work (${list.length}):\n${formatRows(list)}`.slice(0, 3900);
+  }
+
+  if (q === '/delivered' || q === 'delivered' || q === 'done' || q.startsWith('✅') || /\bdelivered\b/.test(q)) {
+    const sorted = [...delivered].sort((a, b) =>
+      new Date(b.completedAt || b.updatedAt || 0) - new Date(a.completedAt || a.updatedAt || 0)
+    );
+    return [
+      `✅ Delivered Today: ${deliveredToday.length} (Total Archive: ${delivered.length})`,
+      '',
+      sorted.length ? `Recent Delivered:\n${formatRows(sorted, false, 15)}` : 'No delivered orders yet.'
+    ].join('\n').slice(0, 3900);
+  }
+
+  if (
+    !q ||
+    q === '/update' ||
+    q === '/status' ||
+    q === 'update' ||
+    q === 'status' ||
+    q === 'summary' ||
+    q === 'all' ||
+    q === 'sob' ||
+    q === 'hisab' ||
+    q.startsWith('📊') ||
+    q.includes('obostha') ||
+    q.includes('koyta')
+  ) {
+    return buildOrderDigest(store, 'keyring_and_active').whatsappText.slice(0, 3900);
+  }
+
+  // Fallback: Search orders by title, client, category, notes, or assignee
+  const matches = tasks.filter(t => {
+    const empName = (empMap.get(t.employeeId) || '').toLowerCase();
+    return (
+      (t.title || '').toLowerCase().includes(q) ||
+      (t.client || '').toLowerCase().includes(q) ||
+      (t.category || '').toLowerCase().includes(q) ||
+      (t.notes || '').toLowerCase().includes(q) ||
+      empName.includes(q)
+    );
+  });
+
+  if (!matches.length) {
+    return [
+      `No orders found matching "${raw}".`,
+      '',
+      buildOrderDigest(store, 'keyring_and_active').whatsappText
+    ].join('\n').slice(0, 3900);
+  }
+
+  return `🔍 Search "${raw}" (${matches.length} found):\n${formatRows(matches, true, 20)}`.slice(0, 3900);
+}
+
+export async function sendTelegramMessage({ botToken, chatId, text, replyMarkup = TELEGRAM_KEYBOARD }) {
+  if (!botToken || !chatId) {
     throw new Error('Missing Telegram Bot Token or Chat ID');
   }
-  const url = `https://api.telegram.org/bot${encodeURIComponent(cfg.telegramBotToken)}/sendMessage`;
+  const url = `https://api.telegram.org/bot${encodeURIComponent(botToken)}/sendMessage`;
+  const payload = {
+    chat_id: chatId,
+    text: String(text || '').slice(0, 4096)
+  };
+  if (replyMarkup) payload.reply_markup = replyMarkup;
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: cfg.telegramChatId,
-      text: digest.whatsappText
-    }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(15000)
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.ok === false) {
     throw new Error(`Telegram error (${res.status}): ${data.description || 'Failed'}`);
   }
+}
+
+export async function sendTelegramDigest({ cfg, digest }) {
+  await sendTelegramMessage({
+    botToken: cfg.telegramBotToken,
+    chatId: cfg.telegramChatId,
+    text: digest.whatsappText,
+    replyMarkup: TELEGRAM_KEYBOARD
+  });
 }
 
 export async function sendWebhookDigest({ cfg, digest }) {
@@ -482,4 +635,126 @@ export function startNotifyScheduler({ dataDir, getStore }) {
   const timer = setInterval(tick, 60000);
   setTimeout(tick, 10000);
   return () => clearInterval(timer);
+}
+
+export function startTelegramCommandListener({ dataDir, getStore, refreshStore }) {
+  let stopped = false;
+  let activeAbort = null;
+  let configuredCommandsForToken = '';
+
+  const ensureBotCommands = async (token) => {
+    if (configuredCommandsForToken === token) return;
+    configuredCommandsForToken = token;
+    try {
+      await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/setMyCommands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commands: [
+            { command: 'keyring', description: 'Keyring pending work & printing status' },
+            { command: 'update', description: 'Full live order summary' },
+            { command: 'printing', description: 'Orders currently in printing' },
+            { command: 'ordered', description: 'Newly ordered items' },
+            { command: 'work', description: 'All items needing work' },
+            { command: 'delivered', description: 'Delivered today & recent' }
+          ]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+    } catch (e) {}
+  };
+
+  const loop = async () => {
+    while (!stopped) {
+      let delayMs = 1500;
+      try {
+        const cfg = readNotifyConfig(dataDir);
+        if (!cfg.telegramEnabled || !cfg.telegramBotToken || !cfg.telegramChatId) {
+          await new Promise(r => setTimeout(r, 5000));
+          continue;
+        }
+
+        const token = cfg.telegramBotToken;
+        ensureBotCommands(token);
+
+        const offset = cfg.lastTelegramUpdateId > 0 ? cfg.lastTelegramUpdateId + 1 : 0;
+        const pollTimeout = offset > 0 ? 20 : 0;
+        const controller = new AbortController();
+        activeAbort = controller;
+        const reqTimeout = setTimeout(() => controller.abort(), (pollTimeout + 10) * 1000);
+
+        const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/getUpdates?timeout=${pollTimeout}${offset > 0 ? `&offset=${offset}` : ''}`;
+        let res;
+        try {
+          res = await fetch(url, { signal: controller.signal });
+        } finally {
+          clearTimeout(reqTimeout);
+          activeAbort = null;
+        }
+
+        if (stopped) break;
+        if (res.status === 409) {
+          // Another device/instance is polling the same bot token; back off calmly
+          await new Promise(r => setTimeout(r, 15000));
+          continue;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          await new Promise(r => setTimeout(r, 5000));
+          continue;
+        }
+
+        const updates = Array.isArray(data.result) ? data.result : [];
+        if (updates.length > 0) {
+          let maxUpdateId = cfg.lastTelegramUpdateId || 0;
+          const hadSavedOffset = (cfg.lastTelegramUpdateId || 0) > 0;
+          const nowEpochSec = Math.floor(Date.now() / 1000);
+
+          for (const upd of updates) {
+            if (upd.update_id > maxUpdateId) maxUpdateId = upd.update_id;
+            const msg = upd.message || upd.edited_message;
+            if (!msg || !msg.chat || msg.text === undefined) continue;
+
+            // Only respond to authorized configured Chat ID
+            if (String(msg.chat.id) !== String(cfg.telegramChatId)) continue;
+
+            // On first startup with no saved offset, skip stale messages older than 2 minutes
+            if (!hadSavedOffset && msg.date && (nowEpochSec - msg.date > 120)) continue;
+
+            try {
+              await Promise.race([
+                Promise.resolve(refreshStore?.()),
+                new Promise(r => setTimeout(r, 2500))
+              ]);
+            } catch (e) {}
+
+            const replyText = buildTelegramReply(getStore(), msg.text);
+            await sendTelegramMessage({
+              botToken: token,
+              chatId: cfg.telegramChatId,
+              text: replyText,
+              replyMarkup: TELEGRAM_KEYBOARD
+            });
+          }
+
+          const latestCfg = readNotifyConfig(dataDir);
+          if (maxUpdateId > (latestCfg.lastTelegramUpdateId || 0)) {
+            writeNotifyConfig(dataDir, { ...latestCfg, lastTelegramUpdateId: maxUpdateId });
+          }
+        }
+        delayMs = 200;
+      } catch (err) {
+        if (stopped) break;
+        delayMs = 5000;
+      }
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  };
+
+  setTimeout(loop, 2000);
+  return () => {
+    stopped = true;
+    try { activeAbort?.abort(); } catch (e) {}
+  };
 }

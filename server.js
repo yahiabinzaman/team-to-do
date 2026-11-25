@@ -14,7 +14,8 @@ import {
   buildOrderDigest,
   dispatchDigest,
   detectTelegramChatId,
-  startNotifyScheduler
+  startNotifyScheduler,
+  startTelegramCommandListener
 } from './notifier.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -627,6 +628,18 @@ async function initSupabaseCloudSync() {
   }
 }
 
+async function refreshTasksFromCloud() {
+  if (!supabase) return;
+  try {
+    const { data: cloudTasks, error: taskErr } = await supabase.from('tasks').select('*');
+    if (!taskErr && Array.isArray(cloudTasks) && cloudTasks.length > 0) {
+      currentStore.tasks = cloudTasks.map(supabaseToTask);
+      writeStore(currentStore);
+      broadcast({ type: 'FULL_SYNC', data: currentStore });
+    }
+  } catch (e) {}
+}
+
 // Start cloud sync
 initSupabaseCloudSync();
 
@@ -719,6 +732,12 @@ app.post('/api/notifications/send-now', async (req, res) => {
 const stopNotifyScheduler = startNotifyScheduler({
   dataDir: DATA_DIR,
   getStore: () => currentStore
+});
+
+const stopTelegramListener = startTelegramCommandListener({
+  dataDir: DATA_DIR,
+  getStore: () => currentStore,
+  refreshStore: refreshTasksFromCloud
 });
 
 app.get('/api/network-info', (req, res) => {
@@ -1120,6 +1139,7 @@ server.listen(PORT, '0.0.0.0', () => {
 
 export function stopServer() {
   try { stopNotifyScheduler?.(); } catch (e) {}
+  try { stopTelegramListener?.(); } catch (e) {}
   return new Promise((resolve) => {
     try {
       wss.clients.forEach((client) => {
