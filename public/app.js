@@ -1325,6 +1325,17 @@ function setNotifyStatus(text, isError = false) {
   el.classList.toggle('error', !!isError);
 }
 
+function updateWaProviderHint() {
+  const sel = document.getElementById('notifyWaProviderSelect');
+  const hint = document.getElementById('notifyWaHint');
+  if (!sel || !hint) return;
+  if (sel.value === 'callmebot') {
+    hint.innerHTML = 'Text <code>I allow callmebot to send me messages</code> to CallMeBot active WhatsApp number to get your API key.';
+  } else {
+    hint.innerHTML = 'Get key at textmebot.com, add phone, then click <strong>Connect Number</strong> on TextMeBot.';
+  }
+}
+
 function readNotifyFormPayload() {
   return {
     enabled: !!document.getElementById('notifyEnabledCheck')?.checked,
@@ -1335,8 +1346,12 @@ function readNotifyFormPayload() {
     smtpUser: document.getElementById('notifySmtpUserInput')?.value.trim() || '',
     smtpPass: document.getElementById('notifySmtpPassInput')?.value.trim() || '',
     whatsappEnabled: !!document.getElementById('notifyWaEnabledCheck')?.checked,
+    whatsappProvider: document.getElementById('notifyWaProviderSelect')?.value || 'textmebot',
     whatsappPhone: document.getElementById('notifyWaPhoneInput')?.value.trim() || '',
     whatsappApiKey: document.getElementById('notifyWaKeyInput')?.value.trim() || '',
+    telegramEnabled: !!document.getElementById('notifyTgEnabledCheck')?.checked,
+    telegramBotToken: document.getElementById('notifyTgTokenInput')?.value.trim() || '',
+    telegramChatId: document.getElementById('notifyTgChatIdInput')?.value.trim() || '',
     webhookUrl: document.getElementById('notifyWebhookInput')?.value.trim() || ''
   };
 }
@@ -1368,6 +1383,9 @@ async function loadNotifyConfig() {
     }
 
     document.getElementById('notifyWaEnabledCheck').checked = !!c.whatsappEnabled;
+    const provSel = document.getElementById('notifyWaProviderSelect');
+    if (provSel) provSel.value = c.whatsappProvider || 'textmebot';
+    updateWaProviderHint();
     document.getElementById('notifyWaPhoneInput').value = c.whatsappPhone || '';
 
     const waKeyInput = document.getElementById('notifyWaKeyInput');
@@ -1376,12 +1394,33 @@ async function loadNotifyConfig() {
       waKeyInput.placeholder = c.hasWhatsappApiKey ? 'Saved (leave blank to keep)' : 'API Key';
     }
 
+    const tgCheck = document.getElementById('notifyTgEnabledCheck');
+    if (tgCheck) tgCheck.checked = !!c.telegramEnabled;
+    const tgToken = document.getElementById('notifyTgTokenInput');
+    if (tgToken) {
+      tgToken.value = '';
+      tgToken.placeholder = c.hasTelegramBotToken ? 'Saved (leave blank to keep)' : '123456:ABC...';
+    }
+    const tgChat = document.getElementById('notifyTgChatIdInput');
+    if (tgChat) tgChat.value = c.telegramChatId || '';
+
     document.getElementById('notifyWebhookInput').value = c.webhookUrl || '';
     if (c.lastSentDate) {
       setNotifyStatus(`Last auto-sent: ${c.lastSentDate}`);
     } else {
       setNotifyStatus('');
     }
+  } catch (e) {}
+}
+
+async function shareSummaryToWhatsApp() {
+  try {
+    const scope = document.getElementById('notifyScopeSelect')?.value || 'keyring_and_active';
+    const res = await fetch(`/api/notifications/preview?scope=${encodeURIComponent(scope)}`);
+    const data = await res.json();
+    const text = data?.digest?.text || '';
+    if (!text) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   } catch (e) {}
 }
 

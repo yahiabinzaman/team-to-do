@@ -176,6 +176,11 @@ function createWidgetWindow() {
 
   mainWindow.loadURL('http://localhost:4973');
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   // Auto-retry connection if server is still starting up
   mainWindow.webContents.on('did-fail-load', (event, errorCode) => {
     if (errorCode !== -3) { // -3 is ABORTED, ignore

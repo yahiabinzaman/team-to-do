@@ -34,8 +34,12 @@ export function defaultNotifyConfig() {
     smtpUser: '',
     smtpPass: '',
     whatsappEnabled: false,
+    whatsappProvider: 'textmebot',
     whatsappPhone: '',
     whatsappApiKey: '',
+    telegramEnabled: false,
+    telegramBotToken: '',
+    telegramChatId: '',
     webhookUrl: '',
     lastSentDate: ''
   };
@@ -79,9 +83,14 @@ export function maskNotifyConfig(cfg) {
     smtpPass: '',
     hasSmtpPass: Boolean(cfg.smtpPass),
     whatsappEnabled: !!cfg.whatsappEnabled,
+    whatsappProvider: cfg.whatsappProvider === 'callmebot' ? 'callmebot' : 'textmebot',
     whatsappPhone: cfg.whatsappPhone || '',
     whatsappApiKey: '',
     hasWhatsappApiKey: Boolean(cfg.whatsappApiKey),
+    telegramEnabled: !!cfg.telegramEnabled,
+    telegramBotToken: '',
+    hasTelegramBotToken: Boolean(cfg.telegramBotToken),
+    telegramChatId: cfg.telegramChatId || '',
     webhookUrl: cfg.webhookUrl || '',
     lastSentDate: cfg.lastSentDate || ''
   };
@@ -101,7 +110,11 @@ export function mergeNotifyConfig(existing, incoming = {}) {
     emailTo: incoming.emailTo !== undefined ? String(incoming.emailTo).trim() : existing.emailTo,
     smtpUser: incoming.smtpUser !== undefined ? String(incoming.smtpUser).trim() : existing.smtpUser,
     whatsappEnabled: incoming.whatsappEnabled !== undefined ? !!incoming.whatsappEnabled : existing.whatsappEnabled,
+    whatsappProvider: incoming.whatsappProvider === 'callmebot' ? 'callmebot'
+      : (incoming.whatsappProvider === 'textmebot' ? 'textmebot' : (existing.whatsappProvider || 'textmebot')),
     whatsappPhone: incoming.whatsappPhone !== undefined ? String(incoming.whatsappPhone).trim() : existing.whatsappPhone,
+    telegramEnabled: incoming.telegramEnabled !== undefined ? !!incoming.telegramEnabled : existing.telegramEnabled,
+    telegramChatId: incoming.telegramChatId !== undefined ? String(incoming.telegramChatId).trim() : existing.telegramChatId,
     webhookUrl: incoming.webhookUrl !== undefined ? String(incoming.webhookUrl).trim() : existing.webhookUrl
   };
 
@@ -115,6 +128,12 @@ export function mergeNotifyConfig(existing, incoming = {}) {
     next.whatsappApiKey = '';
   } else if (typeof incoming.whatsappApiKey === 'string' && incoming.whatsappApiKey.trim() !== '') {
     next.whatsappApiKey = incoming.whatsappApiKey.trim();
+  }
+
+  if (incoming.clearTelegramBotToken) {
+    next.telegramBotToken = '';
+  } else if (typeof incoming.telegramBotToken === 'string' && incoming.telegramBotToken.trim() !== '') {
+    next.telegramBotToken = incoming.telegramBotToken.trim();
   }
 
   return next;
@@ -282,14 +301,48 @@ export async function sendEmailDigest({ cfg, digest }) {
 
 export async function sendWhatsAppDigest({ cfg, digest }) {
   if (!cfg.whatsappPhone || !cfg.whatsappApiKey) {
-    throw new Error('Missing WhatsApp number or CallMeBot API key');
+    throw new Error('Missing WhatsApp number or API key');
   }
-  const cleanPhone = String(cfg.whatsappPhone).replace(/[^\d+]/g, '');
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(cleanPhone)}&text=${encodeURIComponent(digest.whatsappText)}&apikey=${encodeURIComponent(cfg.whatsappApiKey)}`;
+  const digits = String(cfg.whatsappPhone).replace(/[^\d]/g, '');
+  if (!digits) throw new Error('Invalid WhatsApp phone number');
+  const cleanPhone = `+${digits}`;
+  const provider = cfg.whatsappProvider === 'callmebot' ? 'callmebot' : 'textmebot';
+
+  if (provider === 'callmebot') {
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(cleanPhone)}&text=${encodeURIComponent(digest.whatsappText)}&apikey=${encodeURIComponent(cfg.whatsappApiKey)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    const body = await res.text();
+    if (!res.ok || (/error/i.test(body) && !/queued/i.test(body))) {
+      throw new Error(`CallMeBot error (${res.status}): ${body.slice(0, 120)}`);
+    }
+    return;
+  }
+
+  const url = `https://api.textmebot.com/send.php?recipient=${encodeURIComponent(cleanPhone)}&apikey=${encodeURIComponent(cfg.whatsappApiKey)}&text=${encodeURIComponent(digest.whatsappText)}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
   const body = await res.text();
-  if (!res.ok || (/error/i.test(body) && !/queued/i.test(body))) {
-    throw new Error(`CallMeBot error (${res.status}): ${body.slice(0, 120)}`);
+  if (!res.ok || (/error|not connected|invalid|fail/i.test(body) && !/success|queued|ok/i.test(body))) {
+    throw new Error(`TextMeBot error (${res.status}): ${body.replace(/<[^>]+>/g, ' ').trim().slice(0, 140)}`);
+  }
+}
+
+export async function sendTelegramDigest({ cfg, digest }) {
+  if (!cfg.telegramBotToken || !cfg.telegramChatId) {
+    throw new Error('Missing Telegram Bot Token or Chat ID');
+  }
+  const url = `https://api.telegram.org/bot${encodeURIComponent(cfg.telegramBotToken)}/sendMessage`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: cfg.telegramChatId,
+      text: digest.whatsappText
+    }),
+    signal: AbortSignal.timeout(15000)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) {
+    throw new Error(`Telegram error (${res.status}): ${data.description || 'Failed'}`);
   }
 }
 
@@ -326,6 +379,11 @@ export async function dispatchDigest({ store, cfg }) {
       sendWhatsAppDigest({ cfg, digest }).then(() => ({ channel: 'whatsapp' }))
     );
   }
+  if (cfg.telegramEnabled && cfg.telegramBotToken && cfg.telegramChatId) {
+    tasks.push(
+      sendTelegramDigest({ cfg, digest }).then(() => ({ channel: 'telegram' }))
+    );
+  }
   if (cfg.webhookUrl) {
     tasks.push(
       sendWebhookDigest({ cfg, digest }).then(() => ({ channel: 'webhook' }))
@@ -335,7 +393,7 @@ export async function dispatchDigest({ store, cfg }) {
   if (tasks.length === 0) {
     return {
       sent: [],
-      errors: ['No notification channel configured (enable Email, WhatsApp, or Webhook first)'],
+      errors: ['No notification channel configured (enable Email, WhatsApp, Telegram, or Webhook first)'],
       digest
     };
   }
@@ -367,6 +425,7 @@ export function startNotifyScheduler({ dataDir, getStore }) {
       const hasChannel =
         (cfg.emailEnabled && cfg.smtpUser && cfg.smtpPass && cfg.emailTo) ||
         (cfg.whatsappEnabled && cfg.whatsappPhone && cfg.whatsappApiKey) ||
+        (cfg.telegramEnabled && cfg.telegramBotToken && cfg.telegramChatId) ||
         Boolean(cfg.webhookUrl);
       if (!hasChannel) return;
 

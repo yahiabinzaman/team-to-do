@@ -368,7 +368,7 @@
       <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.2</div>
+            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.2.1</div>
             <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
           </div>
           <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
@@ -423,18 +423,44 @@
 
       <div class="notify-card">
         <label class="notify-toggle-row" for="notifyWaEnabledCheck">
-          <span>WhatsApp (CallMeBot)</span>
+          <span>WhatsApp Auto Alert</span>
           <input type="checkbox" class="apple-switch" id="notifyWaEnabledCheck">
         </label>
+        <div class="form-group">
+          <label class="form-label" for="notifyWaProviderSelect">Provider</label>
+          <div class="custom-select-wrapper">
+            <select class="form-select" id="notifyWaProviderSelect" onchange="updateWaProviderHint()">
+              <option value="textmebot">TextMeBot (Recommended)</option>
+              <option value="callmebot">CallMeBot</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group">
           <label class="form-label" for="notifyWaPhoneInput">WhatsApp Number</label>
           <input type="text" class="form-input" id="notifyWaPhoneInput" placeholder="+8801XXXXXXXXX">
         </div>
         <div class="form-group">
-          <label class="form-label" for="notifyWaKeyInput">CallMeBot API Key</label>
+          <label class="form-label" for="notifyWaKeyInput">API Key</label>
           <input type="password" class="form-input" id="notifyWaKeyInput" placeholder="API Key">
         </div>
-        <div class="notify-hint">Free key: message <code>I allow callmebot to send me messages</code> to <strong>+34 644 71 81 99</strong> on WhatsApp.</div>
+        <div class="notify-hint" id="notifyWaHint">Get key at textmebot.com, add phone, then click <strong>Connect Number</strong> on TextMeBot.</div>
+      </div>
+
+      <div class="notify-card">
+        <label class="notify-toggle-row" for="notifyTgEnabledCheck">
+          <span>Telegram Bot (Optional)</span>
+          <input type="checkbox" class="apple-switch" id="notifyTgEnabledCheck">
+        </label>
+        <div class="form-row-2col">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="notifyTgTokenInput">Bot Token</label>
+            <input type="password" class="form-input" id="notifyTgTokenInput" placeholder="123456:ABC...">
+          </div>
+          <div class="form-group" style="flex:0.8;">
+            <label class="form-label" for="notifyTgChatIdInput">Chat ID</label>
+            <input type="text" class="form-input" id="notifyTgChatIdInput" placeholder="123456789">
+          </div>
+        </div>
       </div>
 
       <div class="notify-card">
@@ -447,6 +473,7 @@
       <div id="notifyStatusMsg" class="notify-status-msg" role="status" aria-live="polite"></div>
 
       <div class="notify-actions-row">
+        <button type="button" class="btn-apple-cancel" onclick="shareSummaryToWhatsApp()" title="Open summary in WhatsApp">Share WA</button>
         <button type="button" class="btn-apple-cancel" onclick="saveNotifySettings(false)">Save Alerts</button>
         <button type="button" class="btn-apple-save" id="btnSendNotifyNow" onclick="sendNotifyNow()">Send Now</button>
       </div>
