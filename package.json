@@ -1,6 +1,6 @@
 {
   "name": "team-to-do",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Apple Reminders Style Real-time Desktop Team Task & Calendar Widget for Mac & Windows",
   "main": "electron-main.js",
   "type": "module",
@@ -24,6 +24,7 @@
       "server.js",
       "electron-main.js",
       "updater.js",
+      "notifier.js",
       "preload.cjs",
       "public/**/*",
       "data/**/*",
@@ -94,6 +95,7 @@
     "cors": "^2.8.5",
     "electron-updater": "^6.8.11",
     "express": "^4.19.2",
+    "nodemailer": "^10.6.1",
     "ws": "^8.17.0"
   },
   "devDependencies": {

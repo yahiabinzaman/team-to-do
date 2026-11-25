@@ -1294,10 +1294,146 @@ function deleteEmployee(id, name) {
 function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
+  if (id === 'settingsModal') {
+    loadNotifyConfig();
+  }
   if (typeof el.showModal === 'function') {
     if (!el.open) el.showModal();
   } else {
     el.classList.add('open');
+  }
+}
+
+function switchSettingsTab(tab) {
+  const isAlerts = tab === 'alerts';
+  document.getElementById('btnSettingsGeneral')?.classList.toggle('active', !isAlerts);
+  document.getElementById('btnSettingsAlerts')?.classList.toggle('active', isAlerts);
+  document.getElementById('btnSettingsGeneral')?.setAttribute('aria-selected', isAlerts ? 'false' : 'true');
+  document.getElementById('btnSettingsAlerts')?.setAttribute('aria-selected', isAlerts ? 'true' : 'false');
+
+  const genEl = document.getElementById('settingsTabGeneral');
+  const alertsEl = document.getElementById('settingsTabAlerts');
+  if (genEl) genEl.style.display = isAlerts ? 'none' : 'flex';
+  if (alertsEl) alertsEl.style.display = isAlerts ? 'flex' : 'none';
+  if (isAlerts) loadNotifyConfig();
+}
+
+function setNotifyStatus(text, isError = false) {
+  const el = document.getElementById('notifyStatusMsg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('error', !!isError);
+}
+
+function readNotifyFormPayload() {
+  return {
+    enabled: !!document.getElementById('notifyEnabledCheck')?.checked,
+    scheduleTime: document.getElementById('notifyTimeInput')?.value || '09:00',
+    scope: document.getElementById('notifyScopeSelect')?.value || 'keyring_and_active',
+    emailEnabled: !!document.getElementById('notifyEmailEnabledCheck')?.checked,
+    emailTo: document.getElementById('notifyEmailToInput')?.value.trim() || '',
+    smtpUser: document.getElementById('notifySmtpUserInput')?.value.trim() || '',
+    smtpPass: document.getElementById('notifySmtpPassInput')?.value.trim() || '',
+    whatsappEnabled: !!document.getElementById('notifyWaEnabledCheck')?.checked,
+    whatsappPhone: document.getElementById('notifyWaPhoneInput')?.value.trim() || '',
+    whatsappApiKey: document.getElementById('notifyWaKeyInput')?.value.trim() || '',
+    webhookUrl: document.getElementById('notifyWebhookInput')?.value.trim() || ''
+  };
+}
+
+async function loadNotifyConfig() {
+  try {
+    const res = await fetch('/api/notifications/config');
+    if (!res.ok) {
+      if (res.status === 403) {
+        setNotifyStatus('Alerts can only be configured from the local host app.', true);
+      }
+      return;
+    }
+    const data = await res.json();
+    const c = data.config;
+    if (!c) return;
+
+    document.getElementById('notifyEnabledCheck').checked = !!c.enabled;
+    document.getElementById('notifyTimeInput').value = c.scheduleTime || '09:00';
+    document.getElementById('notifyScopeSelect').value = c.scope || 'keyring_and_active';
+    document.getElementById('notifyEmailEnabledCheck').checked = !!c.emailEnabled;
+    document.getElementById('notifyEmailToInput').value = c.emailTo || '';
+    document.getElementById('notifySmtpUserInput').value = c.smtpUser || '';
+
+    const passInput = document.getElementById('notifySmtpPassInput');
+    if (passInput) {
+      passInput.value = '';
+      passInput.placeholder = c.hasSmtpPass ? 'Saved (leave blank to keep)' : '16-char App Password';
+    }
+
+    document.getElementById('notifyWaEnabledCheck').checked = !!c.whatsappEnabled;
+    document.getElementById('notifyWaPhoneInput').value = c.whatsappPhone || '';
+
+    const waKeyInput = document.getElementById('notifyWaKeyInput');
+    if (waKeyInput) {
+      waKeyInput.value = '';
+      waKeyInput.placeholder = c.hasWhatsappApiKey ? 'Saved (leave blank to keep)' : 'API Key';
+    }
+
+    document.getElementById('notifyWebhookInput').value = c.webhookUrl || '';
+    if (c.lastSentDate) {
+      setNotifyStatus(`Last auto-sent: ${c.lastSentDate}`);
+    } else {
+      setNotifyStatus('');
+    }
+  } catch (e) {}
+}
+
+async function saveNotifySettings(silent = false) {
+  try {
+    const payload = readNotifyFormPayload();
+    const res = await fetch('/api/notifications/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (!silent) setNotifyStatus(data.error || 'Failed to save alert settings.', true);
+      return false;
+    }
+    await loadNotifyConfig();
+    if (!silent) {
+      setNotifyStatus('✓ Alert settings saved.');
+      if (window.appleSounds) window.appleSounds.playPop();
+    }
+    return true;
+  } catch (e) {
+    if (!silent) setNotifyStatus('Could not save settings.', true);
+    return false;
+  }
+}
+
+async function sendNotifyNow() {
+  const btn = document.getElementById('btnSendNotifyNow');
+  if (btn) btn.disabled = true;
+  setNotifyStatus('Sending summary...');
+  try {
+    await saveNotifySettings(true);
+    const res = await fetch('/api/notifications/send-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (data.success) {
+      setNotifyStatus(`✓ Sent via ${data.sent.join(' & ')} (${data.counts?.keyringPending ?? 0} Keyring pending)`);
+      if (window.appleSounds) window.appleSounds.playComplete();
+    } else {
+      const msg = (data.errors && data.errors[0]) || data.error || 'Send failed';
+      const prefix = data.sent && data.sent.length ? `Sent via ${data.sent.join(', ')} • ` : '';
+      setNotifyStatus(`${prefix}${msg}`, true);
+    }
+  } catch (e) {
+    setNotifyStatus('Network error while sending.', true);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 

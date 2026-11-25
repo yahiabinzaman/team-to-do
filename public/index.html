@@ -331,7 +331,12 @@
       <button type="button" class="modal-close-btn" onclick="closeModal('settingsModal')" aria-label="Close settings">✕</button>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:12px; max-height:260px; overflow-y:auto; padding-right: 2px;">
+    <div class="settings-tab-bar" role="tablist" aria-label="Settings Sections">
+      <button type="button" role="tab" aria-selected="true" class="settings-tab-btn active" id="btnSettingsGeneral" onclick="switchSettingsTab('general')">General</button>
+      <button type="button" role="tab" aria-selected="false" class="settings-tab-btn" id="btnSettingsAlerts" onclick="switchSettingsTab('alerts')">WhatsApp &amp; Mail</button>
+    </div>
+
+    <div id="settingsTabGeneral" class="settings-scroll-body">
       <div>
         <div class="modal-section-title">
           <span>Team Members</span>
@@ -363,7 +368,7 @@
       <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.1</div>
+            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.2</div>
             <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
           </div>
           <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
@@ -373,8 +378,82 @@
       </div>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
-      <button type="button" class="btn-apple-save" onclick="closeModal('settingsModal')">Done</button>
+    <div id="settingsTabAlerts" class="settings-scroll-body" style="display:none;">
+      <div class="notify-card">
+        <label class="notify-toggle-row" for="notifyEnabledCheck">
+          <span>Daily Auto Summary</span>
+          <input type="checkbox" class="apple-switch" id="notifyEnabledCheck">
+        </label>
+        <div class="form-row-2col" style="margin-top:4px;">
+          <div class="form-group" style="flex:0.8;">
+            <label class="form-label" for="notifyTimeInput">Send Time</label>
+            <input type="time" class="form-input" id="notifyTimeInput" value="09:00">
+          </div>
+          <div class="form-group" style="flex:1.2;">
+            <label class="form-label" for="notifyScopeSelect">Include</label>
+            <div class="custom-select-wrapper">
+              <select class="form-select" id="notifyScopeSelect">
+                <option value="keyring_and_active">Keyrings + Active</option>
+                <option value="keyring_only">Keyrings Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notify-card">
+        <label class="notify-toggle-row" for="notifyEmailEnabledCheck">
+          <span>Email (Gmail SMTP)</span>
+          <input type="checkbox" class="apple-switch" id="notifyEmailEnabledCheck">
+        </label>
+        <div class="form-group">
+          <label class="form-label" for="notifyEmailToInput">Send To Email</label>
+          <input type="email" class="form-input" id="notifyEmailToInput" placeholder="yahiamahmud10@gmail.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="notifySmtpUserInput">Your Gmail Address</label>
+          <input type="email" class="form-input" id="notifySmtpUserInput" placeholder="yahiamahmud10@gmail.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="notifySmtpPassInput">Gmail App Password</label>
+          <input type="password" class="form-input" id="notifySmtpPassInput" placeholder="16-char App Password">
+        </div>
+        <div class="notify-hint">Create a 16-char App Password in Google Account → Security → App passwords.</div>
+      </div>
+
+      <div class="notify-card">
+        <label class="notify-toggle-row" for="notifyWaEnabledCheck">
+          <span>WhatsApp (CallMeBot)</span>
+          <input type="checkbox" class="apple-switch" id="notifyWaEnabledCheck">
+        </label>
+        <div class="form-group">
+          <label class="form-label" for="notifyWaPhoneInput">WhatsApp Number</label>
+          <input type="text" class="form-input" id="notifyWaPhoneInput" placeholder="+8801XXXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="notifyWaKeyInput">CallMeBot API Key</label>
+          <input type="password" class="form-input" id="notifyWaKeyInput" placeholder="API Key">
+        </div>
+        <div class="notify-hint">Free key: message <code>I allow callmebot to send me messages</code> to <strong>+34 644 71 81 99</strong> on WhatsApp.</div>
+      </div>
+
+      <div class="notify-card">
+        <div class="form-group">
+          <label class="form-label" for="notifyWebhookInput">Webhook URL (Optional)</label>
+          <input type="url" class="form-input" id="notifyWebhookInput" placeholder="https://...">
+        </div>
+      </div>
+
+      <div id="notifyStatusMsg" class="notify-status-msg" role="status" aria-live="polite"></div>
+
+      <div class="notify-actions-row">
+        <button type="button" class="btn-apple-cancel" onclick="saveNotifySettings(false)">Save Alerts</button>
+        <button type="button" class="btn-apple-save" id="btnSendNotifyNow" onclick="sendNotifyNow()">Send Now</button>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top: 2px;">
+      <button type="button" class="btn-apple-cancel" onclick="closeModal('settingsModal')">Done</button>
     </div>
   </dialog>
 

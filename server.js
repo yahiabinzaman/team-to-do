@@ -6,6 +6,15 @@ import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
+import {
+  readNotifyConfig,
+  writeNotifyConfig,
+  maskNotifyConfig,
+  mergeNotifyConfig,
+  buildOrderDigest,
+  dispatchDigest,
+  startNotifyScheduler
+} from './notifier.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -624,9 +633,71 @@ initSupabaseCloudSync();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+function isLoopbackRequest(req) {
+  const addr = req.socket?.remoteAddress || '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
 // API Routes
 app.get('/api/state', (req, res) => {
   res.json({ success: true, data: currentStore, serverTime: new Date().toISOString() });
+});
+
+app.get('/api/notifications/config', (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ success: false, error: 'Local device access only' });
+  }
+  const cfg = readNotifyConfig(DATA_DIR);
+  res.json({ success: true, config: maskNotifyConfig(cfg) });
+});
+
+app.post('/api/notifications/config', (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ success: false, error: 'Local device access only' });
+  }
+  const existing = readNotifyConfig(DATA_DIR);
+  const next = mergeNotifyConfig(existing, req.body || {});
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const todayStr = getLocalISODate(now);
+  if (next.enabled && !existing.enabled && next.scheduleTime <= hhmm) {
+    next.lastSentDate = todayStr;
+  } else if (next.scheduleTime !== existing.scheduleTime && next.scheduleTime > hhmm) {
+    next.lastSentDate = '';
+  }
+  writeNotifyConfig(DATA_DIR, next);
+  res.json({ success: true, config: maskNotifyConfig(next) });
+});
+
+app.get('/api/notifications/preview', (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ success: false, error: 'Local device access only' });
+  }
+  const scope = req.query.scope === 'keyring_only' ? 'keyring_only' : 'keyring_and_active';
+  const digest = buildOrderDigest(currentStore, scope);
+  res.json({ success: true, digest: { subject: digest.subject, text: digest.whatsappText, counts: digest.counts } });
+});
+
+app.post('/api/notifications/send-now', async (req, res) => {
+  if (!isLoopbackRequest(req)) {
+    return res.status(403).json({ success: false, error: 'Local device access only' });
+  }
+  const existing = readNotifyConfig(DATA_DIR);
+  const cfg = req.body && Object.keys(req.body).length > 0
+    ? mergeNotifyConfig(existing, req.body)
+    : existing;
+  const result = await dispatchDigest({ store: currentStore, cfg });
+  res.json({
+    success: result.sent.length > 0 && result.errors.length === 0,
+    sent: result.sent,
+    errors: result.errors,
+    counts: result.digest.counts
+  });
+});
+
+const stopNotifyScheduler = startNotifyScheduler({
+  dataDir: DATA_DIR,
+  getStore: () => currentStore
 });
 
 app.get('/api/network-info', (req, res) => {
@@ -1027,6 +1098,7 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 export function stopServer() {
+  try { stopNotifyScheduler?.(); } catch (e) {}
   return new Promise((resolve) => {
     try {
       wss.clients.forEach((client) => {
