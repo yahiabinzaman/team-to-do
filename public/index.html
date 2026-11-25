@@ -16,23 +16,23 @@
 
       <!-- TOP HEADER (Clean Apple Reminders Style) -->
       <div class="reminders-widget-header no-drag">
-        <div class="reminders-count-block" onclick="openAddTaskModal()" style="cursor: pointer;">
-          <div class="reminders-big-count" id="widgetMainCount">5</div>
+        <div class="reminders-count-block" onclick="openAddTaskModal()" style="cursor: pointer;" title="Add New Order / Task">
+          <div class="reminders-big-count" id="widgetMainCount">0</div>
           <div class="reminders-label" id="widgetMainLabel">
-            <span>Reminders</span>
+            <span>Active Orders</span>
           </div>
         </div>
 
         <!-- Prominent Apple Action Buttons -->
         <div class="header-action-group">
-          <button class="apple-header-btn btn-add-highlight" onclick="openAddTaskModal()" title="Add New Task">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="apple-header-btn btn-add-highlight" onclick="openAddTaskModal()" title="Add New Order / Task" aria-label="Add New Order or Task">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
           </button>
-          <button class="apple-header-btn btn-settings-glass" onclick="openModal('settingsModal')" title="Settings & Members">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="apple-header-btn btn-settings-glass" onclick="openModal('settingsModal')" title="Settings & Members" aria-label="Settings and Members">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
@@ -41,19 +41,85 @@
       </div>
 
       <!-- Segmented Tabs: Tasks | Team | Timeline | History -->
-      <div class="widget-mode-bar no-drag">
-        <button class="mode-tab-btn active" id="btnModeTasks" onclick="setWidgetDisplayMode('tasks')">Tasks</button>
-        <button class="mode-tab-btn" id="btnModeTeam" onclick="setWidgetDisplayMode('team')">Team</button>
-        <button class="mode-tab-btn" id="btnModeTimeline" onclick="setWidgetDisplayMode('timeline')">Timeline</button>
-        <button class="mode-tab-btn" id="btnModeHistory" onclick="setWidgetDisplayMode('history')">History</button>
+      <div class="widget-mode-bar no-drag" role="tablist" aria-label="Widget Views">
+        <button type="button" role="tab" aria-selected="true" class="mode-tab-btn active" id="btnModeTasks" onclick="setWidgetDisplayMode('tasks')">Orders</button>
+        <button type="button" role="tab" aria-selected="false" class="mode-tab-btn" id="btnModeTeam" onclick="setWidgetDisplayMode('team')">Team</button>
+        <button type="button" role="tab" aria-selected="false" class="mode-tab-btn" id="btnModeTimeline" onclick="setWidgetDisplayMode('timeline')">Timeline</button>
+        <button type="button" role="tab" aria-selected="false" class="mode-tab-btn" id="btnModeHistory" onclick="setWidgetDisplayMode('history')">History</button>
       </div>
 
-      <!-- VIEW 1: ALL ACTIVE TASKS (Grouped by Date & Scrollable) -->
+      <!-- VIEW 1: ORDERS & WORKFLOW PIPELINE -->
       <div class="widget-tab-view no-drag active" id="tasksView">
         <div id="activeMemberFilterBanner" style="display: none;" class="member-filter-banner">
           <span id="activeMemberFilterText">Tanvir's Tasks</span>
-          <button class="clear-filter-btn" onclick="clearMemberFilter()">Show All</button>
+          <button type="button" class="clear-filter-btn" onclick="clearMemberFilter()">Show All</button>
         </div>
+
+        <!-- 4-Stage Summary Tiles (Apple Reminders Style) -->
+        <div class="stage-summary-grid" id="stageSummaryGrid" role="group" aria-label="Filter by order stage">
+          <button type="button" class="stage-tile stage-ordered" data-stage="ordered" aria-pressed="false" onclick="toggleStageFilter('ordered')" title="Orders received (Order Holo)">
+            <div class="stage-tile-top">
+              <span class="stage-tile-icon" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              </span>
+              <span class="stage-tile-count" id="stageCountOrdered">0</span>
+            </div>
+            <span class="stage-tile-label">Ordered</span>
+          </button>
+
+          <button type="button" class="stage-tile stage-work" data-stage="work" aria-pressed="false" onclick="toggleStageFilter('work')" title="Needs design or work (Kaj Korte Hobe)">
+            <div class="stage-tile-top">
+              <span class="stage-tile-icon" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </span>
+              <span class="stage-tile-count" id="stageCountWork">0</span>
+            </div>
+            <span class="stage-tile-label">To Do</span>
+          </button>
+
+          <button type="button" class="stage-tile stage-printing" data-stage="printing" aria-pressed="false" onclick="toggleStageFilter('printing')" title="Currently in printing">
+            <div class="stage-tile-top">
+              <span class="stage-tile-icon" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+              </span>
+              <span class="stage-tile-count" id="stageCountPrinting">0</span>
+            </div>
+            <span class="stage-tile-label">Printing</span>
+          </button>
+
+          <button type="button" class="stage-tile stage-delivered" data-stage="delivered" aria-pressed="false" onclick="toggleStageFilter('delivered')" title="Completed & delivered">
+            <div class="stage-tile-top">
+              <span class="stage-tile-icon" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </span>
+              <span class="stage-tile-count" id="stageCountDelivered">0</span>
+            </div>
+            <span class="stage-tile-label">Delivered</span>
+          </button>
+        </div>
+
+        <!-- Compact Search, Category & Grouping Toolbar -->
+        <div class="orders-toolbar">
+          <div class="toolbar-search-wrap">
+            <svg class="toolbar-search-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" class="toolbar-search-input" id="tasksSearchInput" placeholder="Search order, client..." aria-label="Search orders" oninput="handleTasksSearchInput()">
+            <button type="button" class="toolbar-search-clear" id="tasksSearchClear" onclick="clearTasksSearch()" title="Clear search" aria-label="Clear search" style="display:none;">✕</button>
+          </div>
+          <div class="toolbar-select-wrap">
+            <select class="toolbar-select" id="tasksCategoryFilter" aria-label="Filter by item type" onchange="handleCategoryFilterChange()">
+              <option value="">All Items</option>
+              <option value="Keyring">Keyring</option>
+              <option value="Cover">Cover</option>
+              <option value="Pen">Pen</option>
+              <option value="Print">Print</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <button type="button" class="toolbar-group-btn" id="btnGroupMode" onclick="toggleGroupMode()" title="Switch grouping between Stage and Date">
+            By Stage
+          </button>
+        </div>
+
         <div class="reminders-list-container" id="tasksListContainer">
           <!-- Rendered by JS -->
         </div>
@@ -85,8 +151,8 @@
       <div class="widget-tab-view no-drag" id="historyView">
         <div class="history-view-container">
           <div class="history-top-meta">
-            <div class="history-stats-badge" id="historyStatsBadge">0 Completed (1-Yr Archive)</div>
-            <input type="text" class="history-search-input" id="historySearchInput" placeholder="Search completed..." oninput="renderHistoryView()">
+            <div class="history-stats-badge" id="historyStatsBadge">0 Delivered (1-Yr Archive)</div>
+            <input type="search" class="history-search-input" id="historySearchInput" placeholder="Search delivered..." aria-label="Search delivered history" oninput="renderHistoryView()">
           </div>
           <div class="history-list-scroll" id="historyListContainer">
             <!-- Rendered by JS -->
@@ -97,177 +163,262 @@
     </div>
   </div>
 
-  <!-- ================= MODALS ================= -->
+  <!-- ================= QUICK STAGE SWITCHER POPOVER ================= -->
+  <div id="stagePopover" class="stage-popover" popover="auto">
+    <div focusgroup="menu nomemory" class="stage-popover-menu" role="group" aria-label="Order Stage">
+      <button type="button" class="stage-menu-item stage-ordered" data-stage="ordered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('ordered')">
+        <span class="stage-menu-icon" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </span>
+        <span class="stage-menu-text">Ordered</span>
+      </button>
+      <button type="button" class="stage-menu-item stage-work" data-stage="work" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('work')">
+        <span class="stage-menu-icon" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </span>
+        <span class="stage-menu-text">Needs Work</span>
+      </button>
+      <button type="button" class="stage-menu-item stage-printing" data-stage="printing" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('printing')">
+        <span class="stage-menu-icon" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        </span>
+        <span class="stage-menu-text">In Printing</span>
+      </button>
+      <button type="button" class="stage-menu-item stage-delivered" data-stage="delivered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('delivered')">
+        <span class="stage-menu-icon" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </span>
+        <span class="stage-menu-text">Delivered</span>
+      </button>
+    </div>
+  </div>
 
-  <!-- ================= MODALS ================= -->
+  <!-- ================= NATIVE MODAL DIALOGS ================= -->
 
-  <!-- Add / Edit Task Modal (Apple Reminders Sheet Style) -->
-  <div class="modal-overlay" id="taskModal">
-    <div class="apple-modal">
-      <div class="modal-header-row">
-        <div class="modal-title-group">
-          <div class="modal-title" id="taskModalHeaderTitle">New Task</div>
-          <div class="modal-subtitle" id="taskModalSubtitle">Apple Reminders</div>
-        </div>
-        <button class="modal-close-btn" type="button" onclick="closeModal('taskModal')">✕</button>
+  <!-- Add / Edit Order & Task Dialog -->
+  <dialog class="apple-modal apple-dialog" id="taskModal" closedby="any" aria-labelledby="taskModalHeaderTitle">
+    <div class="modal-header-row">
+      <div class="modal-title-group">
+        <h1 class="modal-title" id="taskModalHeaderTitle">New Order / Task</h1>
+        <div class="modal-subtitle" id="taskModalSubtitle">Team To do</div>
+      </div>
+      <button class="modal-close-btn" type="button" onclick="closeModal('taskModal')" aria-label="Close modal">✕</button>
+    </div>
+
+    <form id="taskForm" onsubmit="handleTaskSubmit(event)" class="apple-form">
+      <input type="hidden" id="taskIdInput">
+      <input type="hidden" id="taskStageInput" value="work">
+      <input type="hidden" id="taskCategoryInput" value="">
+
+      <div class="form-group">
+        <label class="form-label" for="taskTitleInput">Order / Task Title</label>
+        <input type="text" class="form-input" id="taskTitleInput" placeholder="e.g. As Saif B-Baria Keyring" required autocomplete="off" autofocus>
       </div>
 
-      <form id="taskForm" onsubmit="handleTaskSubmit(event)" class="apple-form">
-        <input type="hidden" id="taskIdInput">
-
-        <div class="form-group">
-          <label class="form-label">Task Title</label>
-          <input type="text" class="form-input" id="taskTitleInput" placeholder="Design Dashboard UI" required autocomplete="off">
+      <!-- Stage Picker -->
+      <div class="form-group">
+        <span class="form-label">Status / Stage</span>
+        <div class="stage-picker-grid" id="taskStagePicker" role="radiogroup" aria-label="Order Stage">
+          <button type="button" class="stage-pick-btn stage-ordered" data-stage="ordered" aria-checked="false" onclick="selectModalStage('ordered')">
+            <span class="stage-pick-dot" aria-hidden="true"></span>
+            <span>Ordered</span>
+          </button>
+          <button type="button" class="stage-pick-btn stage-work active" data-stage="work" aria-checked="true" onclick="selectModalStage('work')">
+            <span class="stage-pick-dot" aria-hidden="true"></span>
+            <span>To Do</span>
+          </button>
+          <button type="button" class="stage-pick-btn stage-printing" data-stage="printing" aria-checked="false" onclick="selectModalStage('printing')">
+            <span class="stage-pick-dot" aria-hidden="true"></span>
+            <span>Printing</span>
+          </button>
+          <button type="button" class="stage-pick-btn stage-delivered" data-stage="delivered" aria-checked="false" onclick="selectModalStage('delivered')">
+            <span class="stage-pick-dot" aria-hidden="true"></span>
+            <span>Delivered</span>
+          </button>
         </div>
+      </div>
 
-        <div class="form-row-2col">
-          <div class="form-group" style="flex: 1;">
-            <label class="form-label">Assignee</label>
-            <div class="custom-select-wrapper">
-              <select class="form-select" id="taskEmployeeSelect" required></select>
-            </div>
-          </div>
-          <div class="form-group" style="flex: 1;">
-            <label class="form-label">Client</label>
-            <input type="text" class="form-input" id="taskClientInput" placeholder="Acme Corp" autocomplete="off">
+      <!-- Item Category Quick Chips -->
+      <div class="form-group">
+        <span class="form-label">Item Type</span>
+        <div class="category-chip-bar" id="taskCategoryPicker" role="group" aria-label="Item Type">
+          <button type="button" class="category-chip" data-category="Keyring" aria-pressed="false" onclick="toggleModalCategory('Keyring')">Keyring</button>
+          <button type="button" class="category-chip" data-category="Cover" aria-pressed="false" onclick="toggleModalCategory('Cover')">Cover</button>
+          <button type="button" class="category-chip" data-category="Pen" aria-pressed="false" onclick="toggleModalCategory('Pen')">Pen</button>
+          <button type="button" class="category-chip" data-category="Print" aria-pressed="false" onclick="toggleModalCategory('Print')">Print</button>
+          <button type="button" class="category-chip" data-category="Other" aria-pressed="false" onclick="toggleModalCategory('Other')">Other</button>
+        </div>
+      </div>
+
+      <div class="form-row-2col">
+        <div class="form-group" style="flex: 0.9;">
+          <label class="form-label" for="taskQtyInput">Qty / Pcs</label>
+          <input type="text" class="form-input" id="taskQtyInput" placeholder="e.g. 640 pcs" autocomplete="off">
+        </div>
+        <div class="form-group" style="flex: 1.1;">
+          <label class="form-label" for="taskClientInput">Client / Madrasa</label>
+          <input type="text" class="form-input" id="taskClientInput" placeholder="e.g. Al Khair 27" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="form-row-2col">
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label" for="taskEmployeeSelect">Assignee</label>
+          <div class="custom-select-wrapper">
+            <select class="form-select" id="taskEmployeeSelect" required></select>
           </div>
         </div>
-
-        <!-- Apple Date Selector Segmented Control -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label class="form-label">Date</label>
-            <span class="form-label-meta" id="taskDateDisplayLabel">Today</span>
-          </div>
-          
-          <div class="apple-segmented-date-bar">
-            <button type="button" class="date-chip active" id="btnDateToday" onclick="selectQuickDate('today')">Today</button>
-            <button type="button" class="date-chip" id="btnDateTomorrow" onclick="selectQuickDate('tomorrow')">Tomorrow</button>
-            <button type="button" class="date-chip" id="btnDateCustom" onclick="selectQuickDate('custom')">Custom...</button>
-          </div>
-
-          <div id="customDateContainer" class="custom-date-container" style="display: none;">
-            <input type="date" class="form-input custom-date-input" id="taskDueDateInput">
-          </div>
-        </div>
-
-        <!-- Apple Time Selector -->
-        <div class="form-group">
-          <label class="form-label">Due Time</label>
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label" for="taskTimeSelect">Due Time</label>
           <div class="custom-select-wrapper">
             <select class="form-select" id="taskTimeSelect">
-              <option value="09:00">09:00 AM (Morning)</option>
+              <option value="09:00">09:00 AM</option>
               <option value="10:00">10:00 AM</option>
               <option value="11:00">11:00 AM</option>
-              <option value="12:00">12:00 PM (Noon)</option>
+              <option value="12:00">12:00 PM</option>
               <option value="13:00">01:00 PM</option>
-              <option value="14:00" selected>02:00 PM (Afternoon)</option>
+              <option value="14:00" selected>02:00 PM</option>
               <option value="15:00">03:00 PM</option>
               <option value="16:00">04:00 PM</option>
-              <option value="17:00">05:00 PM (End of Day)</option>
+              <option value="17:00">05:00 PM</option>
               <option value="18:00">06:00 PM</option>
               <option value="19:00">07:00 PM</option>
-              <option value="20:00">08:00 PM (Evening)</option>
+              <option value="20:00">08:00 PM</option>
               <option value="21:00">09:00 PM</option>
             </select>
           </div>
         </div>
+      </div>
 
-        <!-- Apple Action Buttons -->
-        <div class="modal-footer-row">
+      <!-- Apple Date Selector Segmented Control -->
+      <div class="form-group">
+        <div class="form-label-row">
+          <span class="form-label">Date</span>
+          <span class="form-label-meta" id="taskDateDisplayLabel">Today</span>
+        </div>
+
+        <div class="apple-segmented-date-bar">
+          <button type="button" class="date-chip active" id="btnDateToday" onclick="selectQuickDate('today')">Today</button>
+          <button type="button" class="date-chip" id="btnDateTomorrow" onclick="selectQuickDate('tomorrow')">Tomorrow</button>
+          <button type="button" class="date-chip" id="btnDateCustom" onclick="selectQuickDate('custom')">Custom...</button>
+        </div>
+
+        <div id="customDateContainer" class="custom-date-container" style="display: none;">
+          <input type="date" class="form-input custom-date-input" id="taskDueDateInput" aria-label="Custom due date">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="taskNotesInput">Notes / Hisab</label>
+        <input type="text" class="form-input" id="taskNotesInput" placeholder="Advance, due, print details..." autocomplete="off">
+      </div>
+
+      <!-- Apple Action Buttons -->
+      <div class="modal-footer-row modal-footer-split">
+        <button type="button" class="btn-apple-danger" id="taskDeleteBtn" onclick="confirmDeleteCurrentTask()" style="display:none;">Delete</button>
+        <div class="modal-footer-actions">
           <button type="button" class="btn-apple-cancel" onclick="closeModal('taskModal')">Cancel</button>
-          <button type="submit" class="btn-apple-save" id="taskModalSaveBtn">Save Task</button>
+          <button type="submit" class="btn-apple-save" id="taskModalSaveBtn">Add Order</button>
         </div>
-      </form>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Settings Dialog (Apple Cupertino Style) -->
+  <dialog class="apple-modal apple-dialog" id="settingsModal" closedby="any" aria-labelledby="settingsModalTitle" style="max-width: 320px;">
+    <div class="modal-header-row">
+      <h1 class="modal-title" id="settingsModalTitle">Settings</h1>
+      <button type="button" class="modal-close-btn" onclick="closeModal('settingsModal')" aria-label="Close settings">✕</button>
     </div>
-  </div>
 
-  <!-- Settings Modal (Apple Cupertino Style) -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="apple-modal" style="max-width: 320px;">
-      <div class="modal-header-row">
-        <div class="modal-title">Settings</div>
-        <button class="modal-close-btn" onclick="closeModal('settingsModal')">✕</button>
+    <div style="display:flex; flex-direction:column; gap:12px; max-height:260px; overflow-y:auto; padding-right: 2px;">
+      <div>
+        <div class="modal-section-title">
+          <span>Team Members</span>
+          <button type="button" class="clear-filter-btn" onclick="openAddEmployeeModal()">+ Add</button>
+        </div>
+        <div id="settingsEmpList" style="display:flex; flex-direction:column; gap:4px;"></div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:12px; max-height:260px; overflow-y:auto; padding-right: 2px;">
-        <div>
-          <div class="modal-section-title">
-            <span>Team Members</span>
-            <button class="clear-filter-btn" onclick="openAddEmployeeModal()">+ Add</button>
-          </div>
-          <div id="settingsEmpList" style="display:flex; flex-direction:column; gap:4px;"></div>
-        </div>
-
-        <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
-          <div class="modal-section-title">App Theme</div>
-          <div class="theme-selector-grid">
-            <button type="button" class="theme-choice-btn active" id="btnThemeApple" onclick="setAppTheme('apple')">
-              <span class="theme-dot dot-apple"></span>
-              <span class="theme-btn-title">Apple Dark</span>
-            </button>
-            <button type="button" class="theme-choice-btn" id="btnThemeNotion" onclick="setAppTheme('notion')">
-              <span class="theme-dot dot-notion"></span>
-              <span class="theme-btn-title">Notion Clean</span>
-            </button>
-          </div>
-        </div>
-
-        <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
-          <div class="modal-section-title">Real-Time Sync</div>
-          <div id="syncPeerCountBadge" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">● Live Synced</div>
-          <div id="settingsLanUrls" style="font-size:9.5px; font-family:ui-monospace, monospace; color:var(--text-tertiary); margin-top:4px; word-break:break-all;"></div>
-        </div>
-
-        <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do</div>
-              <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
-            </div>
-            <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
-              GitHub ↗
-            </a>
-          </div>
+      <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
+        <div class="modal-section-title">App Theme</div>
+        <div class="theme-selector-grid">
+          <button type="button" class="theme-choice-btn active" id="btnThemeApple" onclick="setAppTheme('apple')">
+            <span class="theme-dot dot-apple"></span>
+            <span class="theme-btn-title">Apple Dark</span>
+          </button>
+          <button type="button" class="theme-choice-btn" id="btnThemeNotion" onclick="setAppTheme('notion')">
+            <span class="theme-dot dot-notion"></span>
+            <span class="theme-btn-title">Notion Clean</span>
+          </button>
         </div>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
-        <button type="button" class="btn-apple-save" onclick="closeModal('settingsModal')">Done</button>
+      <div style="border-top:1px solid var(--widget-border-inner); padding-top:8px;">
+        <div class="modal-section-title">Real-Time Sync</div>
+        <div id="syncPeerCountBadge" style="font-size:11px; color:var(--text-secondary); margin-top:2px;">● Live Synced</div>
+        <div id="settingsLanUrls" style="font-size:9.5px; font-family:ui-monospace, monospace; color:var(--text-tertiary); margin-top:4px; word-break:break-all;"></div>
+      </div>
+
+      <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.1</div>
+            <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
+          </div>
+          <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
+            GitHub ↗
+          </a>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Add Member Modal -->
-  <div class="modal-overlay" id="employeeModal">
-    <div class="apple-modal">
-      <div class="modal-header-row">
-        <div class="modal-title-group">
-          <div class="modal-title">New Team Member</div>
-          <div class="modal-subtitle">Team Settings</div>
-        </div>
-        <button class="modal-close-btn" type="button" onclick="closeModal('employeeModal')">✕</button>
-      </div>
-      <form id="employeeForm" onsubmit="handleEmployeeSubmit(event)" class="apple-form">
-        <div class="form-group">
-          <label class="form-label">Full Name</label>
-          <input type="text" class="form-input" id="empNameInput" placeholder="Tanvir Ahmed" required autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Role / Designation</label>
-          <input type="text" class="form-input" id="empRoleInput" placeholder="UI/UX Designer" required autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Assigned Clients (comma separated)</label>
-          <input type="text" class="form-input" id="empClientsInput" placeholder="Acme Corp, Apex Tech" autocomplete="off">
-        </div>
-        <div class="modal-footer-row">
-          <button type="button" class="btn-apple-cancel" onclick="closeModal('employeeModal')">Cancel</button>
-          <button type="submit" class="btn-apple-save">Add Member</button>
-        </div>
-      </form>
+    <div style="display:flex; justify-content:flex-end; margin-top: 6px;">
+      <button type="button" class="btn-apple-save" onclick="closeModal('settingsModal')">Done</button>
     </div>
-  </div>
+  </dialog>
+
+  <!-- Add Member Dialog -->
+  <dialog class="apple-modal apple-dialog" id="employeeModal" closedby="any" aria-labelledby="employeeModalTitle">
+    <div class="modal-header-row">
+      <div class="modal-title-group">
+        <h1 class="modal-title" id="employeeModalTitle">New Team Member</h1>
+        <div class="modal-subtitle">Team Settings</div>
+      </div>
+      <button class="modal-close-btn" type="button" onclick="closeModal('employeeModal')" aria-label="Close modal">✕</button>
+    </div>
+    <form id="employeeForm" onsubmit="handleEmployeeSubmit(event)" class="apple-form">
+      <div class="form-group">
+        <label class="form-label" for="empNameInput">Full Name</label>
+        <input type="text" class="form-input" id="empNameInput" placeholder="Tanvir Ahmed" required autocomplete="off" autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="empRoleInput">Role / Designation</label>
+        <input type="text" class="form-input" id="empRoleInput" placeholder="UI/UX Designer" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="empClientsInput">Assigned Clients (comma separated)</label>
+        <input type="text" class="form-input" id="empClientsInput" placeholder="Acme Corp, Apex Tech" autocomplete="off">
+      </div>
+      <div class="modal-footer-row">
+        <button type="button" class="btn-apple-cancel" onclick="closeModal('employeeModal')">Cancel</button>
+        <button type="submit" class="btn-apple-save">Add Member</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Native Confirm Delete Dialog -->
+  <dialog class="apple-modal apple-dialog confirm-dialog" id="confirmDialog" closedby="any" aria-labelledby="confirmDialogTitle">
+    <div class="modal-header-row">
+      <h1 class="modal-title" id="confirmDialogTitle">Confirm Delete</h1>
+      <button class="modal-close-btn" type="button" onclick="closeConfirmDialog('cancel')" aria-label="Close confirmation">✕</button>
+    </div>
+    <p class="confirm-dialog-msg" id="confirmDialogMessage">Are you sure?</p>
+    <form method="dialog" class="modal-footer-row">
+      <button type="submit" value="cancel" class="btn-apple-cancel" autofocus>Cancel</button>
+      <button type="submit" value="confirm" class="btn-apple-danger-solid" id="confirmDialogOkBtn">Delete</button>
+    </form>
+  </dialog>
 
   <script src="sounds.js"></script>
   <script src="app.js"></script>

@@ -1,7 +1,8 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, screen, shell } from 'electron';
+import { app, BrowserWindow, Tray, Menu, Notification, nativeImage, screen, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createAutoUpdater } from './updater.js';
 
 //  Native macOS: Accessory activation policy & hide dock so no dock icon ever appears
 if (process.platform === 'darwin') {
@@ -49,8 +50,19 @@ process.on('uncaughtException', (err) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function getAppVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf-8'));
+    return pkg.version || '1.1.0';
+  } catch (e) {
+    return '1.1.0';
+  }
+}
+
 let mainWindow;
 let tray = null;
+let serverModule = null;
+let autoUpdaterController = null;
 let currentWindowMode = 'desktop'; // 'desktop' | 'normal' | 'always-on-top'
 
 function getBoundsFilePath() {
@@ -97,12 +109,15 @@ async function ensureServerRunning() {
   try {
     process.env.APPDATA_DIR = app.getPath('userData');
   } catch (e) {}
+  if (process.argv.includes('--relaunched')) {
+    await new Promise((r) => setTimeout(r, 700));
+  }
   try {
-    const res = await fetch('http://localhost:4973/api/employees', { signal: AbortSignal.timeout(600) });
+    const res = await fetch('http://localhost:4973/api/state', { signal: AbortSignal.timeout(600) });
     if (res.ok) return;
   } catch (e) {}
   try {
-    await import('./server.js');
+    serverModule = await import('./server.js');
   } catch (err) {
     console.log('[Server Startup Notice]:', err?.message || err);
   }
@@ -402,7 +417,7 @@ function openAboutWindow() {
       <button class="close-btn" onclick="window.close()" title="Close"></button>
       <img class="app-icon" src="data:image/png;base64,${iconBase64}" alt="Team To do Icon" />
       <div class="app-title">Team To do</div>
-      <div class="app-version">Version 1.0.0</div>
+      <div class="app-version">Version ${getAppVersion()}</div>
       
       <div class="developer-block">
         <div class="dev-label">Designed & Developed by</div>
@@ -439,6 +454,34 @@ function openAboutWindow() {
   aboutWindow.on('closed', () => {
     aboutWindow = null;
   });
+}
+
+function buildUpdateMenuItem() {
+  const version = getAppVersion();
+  const st = autoUpdaterController ? autoUpdaterController.getState() : { status: 'idle' };
+
+  if (st.status === 'checking') {
+    return { label: 'Checking for Updates…', enabled: false };
+  }
+  if (st.status === 'downloading') {
+    return { label: `Updating to v${st.version || ''}…`, enabled: false };
+  }
+  if (st.status === 'ready') {
+    return {
+      label: `Restart to Apply v${st.version || ''}`,
+      click: () => autoUpdaterController?.applyPendingUpdate()
+    };
+  }
+  if (st.status === 'available') {
+    return {
+      label: `Download Update v${st.version || ''} ↗`,
+      click: () => autoUpdaterController?.applyPendingUpdate()
+    };
+  }
+  return {
+    label: `Check for Updates (v${version})`,
+    click: () => autoUpdaterController?.checkForUpdates(true)
+  };
 }
 
 function updateTrayMenu() {
@@ -497,6 +540,7 @@ function updateTrayMenu() {
       }
     },
     { type: 'separator' },
+    buildUpdateMenuItem(),
     {
       label: 'GitHub Repository ↗',
       click: () => {
@@ -573,10 +617,11 @@ if (!gotTheLock) {
     }
 
     // Native macOS / OS About panel
+    const currentVer = getAppVersion();
     app.setAboutPanelOptions({
       applicationName: 'Team To do',
-      applicationVersion: '1.0.0',
-      version: '1.0.0',
+      applicationVersion: currentVer,
+      version: currentVer,
       copyright: 'Copyright © 2026 Yahia Bin Zaman',
       credits: 'Designed & Developed by Yahia Bin Zaman',
       authors: ['Yahia Bin Zaman'],
@@ -606,8 +651,19 @@ if (!gotTheLock) {
     // Ensure backend sync server is running
     await ensureServerRunning();
 
+    autoUpdaterController = createAutoUpdater({
+      app,
+      shell,
+      Notification,
+      appDir: __dirname,
+      getVersion: getAppVersion,
+      stopServer: () => serverModule?.stopServer?.(),
+      onStatusChange: () => updateTrayMenu()
+    });
+
     createWidgetWindow();
     createSystemTray();
+    autoUpdaterController.startSchedule();
 
     app.on('activate', () => {
       if (!mainWindow || mainWindow.isDestroyed()) {

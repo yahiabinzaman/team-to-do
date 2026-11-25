@@ -62,11 +62,22 @@ Invoke-WebRequest -Uri $repoZipUrl -OutFile $ZipPath -UseBasicParsing
 Expand-Archive -Path $ZipPath -DestinationPath $ExtractTemp -Force
 $unzippedFolder = Join-Path $ExtractTemp "team-to-do-main"
 
+$envBackup = $null
+$envPath = Join-Path $InstallDir ".env"
+if (Test-Path $envPath) { $envBackup = Get-Content -Path $envPath -Raw }
+
+$hadLocalStore = Test-Path (Join-Path $InstallDir "data\store.json")
+$storeBackup = $null
+if ($hadLocalStore) { $storeBackup = Get-Content -Path (Join-Path $InstallDir "data\store.json") -Raw }
+
 if (Test-Path $unzippedFolder) {
     Copy-Item -Path "$unzippedFolder\*" -Destination $InstallDir -Recurse -Force
 } else {
     Copy-Item -Path "$ExtractTemp\*" -Destination $InstallDir -Recurse -Force
 }
+
+if ($null -ne $envBackup) { Set-Content -Path $envPath -Value $envBackup -Encoding UTF8 }
+if ($null -ne $storeBackup) { Set-Content -Path (Join-Path $InstallDir "data\store.json") -Value $storeBackup -Encoding UTF8 }
 
 Remove-Item $ZipPath -Force -ErrorAction SilentlyContinue
 Remove-Item $ExtractTemp -Recurse -Force -ErrorAction SilentlyContinue

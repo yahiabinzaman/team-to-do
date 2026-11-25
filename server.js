@@ -42,9 +42,11 @@ if (fs.existsSync(ENV_FILE)) {
 }
 
 // Supabase Cloud Configuration
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://xaqmqlvuuumbimscpont.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhcW1xbHZ1dXVtYmltc2Nwb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTg3MzAsImV4cCI6MjEwNTkzNDczMH0.qZSI1sX6eHw8XAai0rgwA2b7UjJT7zOrSecyJWU8qRE';
-const supabase = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://xaqmqlvuuumbimscpont.supabase.co').trim();
+const SUPABASE_KEY = (process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhcW1xbHZ1dXVtYmltc2Nwb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTg3MzAsImV4cCI6MjEwNTkzNDczMH0.qZSI1sX6eHw8XAai0rgwA2b7UjJT7zOrSecyJWU8qRE').trim();
+const supabase = (process.env.SUPABASE_OFFLINE !== '1' && SUPABASE_URL && SUPABASE_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -292,6 +294,98 @@ function pruneOneYearOldTasks(data) {
   });
 }
 
+// Workflow Stages for Keyring / Order & Task Tracking
+const VALID_STAGES = ['ordered', 'work', 'printing', 'delivered'];
+const META_PREFIX = '[[TDMETA:';
+const META_SUFFIX = ']]';
+
+function normalizeStage(rawStage, completed = false) {
+  if (typeof rawStage === 'string') {
+    const s = rawStage.trim().toLowerCase();
+    if (s === 'ordered' || s === 'order') return 'ordered';
+    if (s === 'work' || s === 'todo' || s === 'needs_work' || s === 'pending') return 'work';
+    if (s === 'printing' || s === 'in_printing' || s === 'in_progress' || s === 'print') return 'printing';
+    if (s === 'delivered' || s === 'done' || s === 'completed') return 'delivered';
+  }
+  return completed ? 'delivered' : 'work';
+}
+
+function stageToLegacyStatus(stage) {
+  switch (stage) {
+    case 'ordered': return 'ordered';
+    case 'printing': return 'in_progress';
+    case 'delivered': return 'done';
+    default: return 'todo';
+  }
+}
+
+function normalizeTaskRecord(task) {
+  const stage = normalizeStage(task.stage || task.status, !!task.completed);
+  const isDelivered = stage === 'delivered';
+  const notes = (task.notes !== undefined ? String(task.notes) : (task.description || '')).trim();
+  const category = (task.category || '').trim();
+  const quantity = (task.quantity !== undefined && task.quantity !== null ? String(task.quantity) : '').trim();
+
+  return {
+    ...task,
+    stage,
+    status: stageToLegacyStatus(stage),
+    category,
+    quantity,
+    notes,
+    description: notes,
+    completed: isDelivered,
+    completedAt: isDelivered ? (task.completedAt || new Date().toISOString()) : null
+  };
+}
+
+function encodeSupabaseDescription(task) {
+  const normalized = normalizeTaskRecord(task);
+  const meta = {
+    stage: normalized.stage
+  };
+  if (normalized.category) meta.category = normalized.category;
+  if (normalized.quantity) meta.quantity = normalized.quantity;
+
+  const hasCustomMeta = normalized.stage !== 'work' || !!normalized.category || !!normalized.quantity;
+  if (!hasCustomMeta) {
+    return normalized.notes || '';
+  }
+
+  const header = `${META_PREFIX}${JSON.stringify(meta)}${META_SUFFIX}`;
+  return normalized.notes ? `${header}\n${normalized.notes}` : header;
+}
+
+function decodeSupabaseDescription(rawDescription, completed) {
+  const raw = typeof rawDescription === 'string' ? rawDescription : '';
+  if (raw.startsWith(META_PREFIX)) {
+    const endIdx = raw.indexOf(META_SUFFIX, META_PREFIX.length);
+    if (endIdx !== -1) {
+      const jsonStr = raw.slice(META_PREFIX.length, endIdx);
+      let rest = raw.slice(endIdx + META_SUFFIX.length);
+      if (rest.startsWith('\n')) rest = rest.slice(1);
+      try {
+        const meta = JSON.parse(jsonStr);
+        let stage = normalizeStage(meta.stage, !!completed);
+        if (completed && stage !== 'delivered') stage = 'delivered';
+        if (!completed && stage === 'delivered') stage = 'work';
+        return {
+          stage,
+          category: typeof meta.category === 'string' ? meta.category.trim() : '',
+          quantity: meta.quantity !== undefined && meta.quantity !== null ? String(meta.quantity).trim() : '',
+          notes: rest.trim()
+        };
+      } catch (e) {}
+    }
+  }
+  return {
+    stage: completed ? 'delivered' : 'work',
+    category: '',
+    quantity: '',
+    notes: raw.trim()
+  };
+}
+
 // Read store
 function readStore() {
   try {
@@ -301,6 +395,9 @@ function readStore() {
     }
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.tasks)) {
+      parsed.tasks = parsed.tasks.map(normalizeTaskRecord);
+    }
     pruneOneYearOldTasks(parsed);
     return parsed;
   } catch (err) {
@@ -324,32 +421,41 @@ function writeStore(data) {
 
 // Supabase Data Mapper Helpers
 function taskToSupabase(t) {
+  const normalized = normalizeTaskRecord(t);
   return {
-    id: t.id,
-    title: t.title,
-    description: t.description || '',
-    employee_id: t.employeeId || null,
-    client: t.client || '',
-    due_date: t.dueDate || null,
-    due_time: t.dueTime || null,
-    completed: !!t.completed,
-    completed_at: t.completedAt || null,
-    created_at: t.createdAt || new Date().toISOString(),
-    updated_at: t.updatedAt || new Date().toISOString()
+    id: normalized.id,
+    title: normalized.title,
+    description: encodeSupabaseDescription(normalized),
+    employee_id: normalized.employeeId || null,
+    client: normalized.client || '',
+    due_date: normalized.dueDate || null,
+    due_time: normalized.dueTime || null,
+    completed: !!normalized.completed,
+    completed_at: normalized.completedAt || null,
+    created_at: normalized.createdAt || new Date().toISOString(),
+    updated_at: normalized.updatedAt || new Date().toISOString()
   };
 }
 
 function supabaseToTask(row) {
+  const decoded = decodeSupabaseDescription(row.description, !!row.completed);
+  const isDelivered = decoded.stage === 'delivered' || !!row.completed;
+  const stage = isDelivered ? 'delivered' : decoded.stage;
   return {
     id: row.id,
     title: row.title,
-    description: row.description || '',
+    description: decoded.notes,
+    notes: decoded.notes,
+    category: decoded.category,
+    quantity: decoded.quantity,
+    stage,
+    status: stageToLegacyStatus(stage),
     employeeId: row.employee_id || '',
     client: row.client || '',
     dueDate: row.due_date || '',
     dueTime: row.due_time || '',
-    completed: !!row.completed,
-    completedAt: row.completed_at || null,
+    completed: isDelivered,
+    completedAt: isDelivered ? (row.completed_at || row.updated_at || new Date().toISOString()) : null,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString()
   };
@@ -386,15 +492,21 @@ function supabaseToEmployee(row) {
 async function syncTaskToCloud(task) {
   if (!supabase) return;
   try {
-    await supabase.from('tasks').upsert(taskToSupabase(task));
-  } catch (e) {}
+    const { error } = await supabase.from('tasks').upsert(taskToSupabase(task));
+    if (error) console.error('[Supabase] Task upsert error:', error.message);
+  } catch (e) {
+    console.error('[Supabase] Task upsert exception:', e?.message || e);
+  }
 }
 
 async function deleteTaskFromCloud(id) {
   if (!supabase) return;
   try {
-    await supabase.from('tasks').delete().eq('id', id);
-  } catch (e) {}
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    if (error) console.error('[Supabase] Task delete error:', error.message);
+  } catch (e) {
+    console.error('[Supabase] Task delete exception:', e?.message || e);
+  }
 }
 
 async function syncEmployeeToCloud(employee) {
@@ -605,20 +717,28 @@ function handleClientAction(action, senderWs) {
   switch (type) {
     // --- Task Actions ---
     case 'ADD_TASK': {
-      const newTask = {
+      const stage = normalizeStage(payload.stage || payload.status, !!payload.completed);
+      const isDelivered = stage === 'delivered';
+      const notes = (payload.notes !== undefined ? String(payload.notes) : (payload.description || '')).trim();
+      const newTask = normalizeTaskRecord({
         id: 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
         title: payload.title || 'Untitled Task',
-        description: payload.description || '',
+        description: notes,
+        notes,
+        category: (payload.category || '').trim(),
+        quantity: (payload.quantity !== undefined && payload.quantity !== null ? String(payload.quantity) : '').trim(),
         employeeId: payload.employeeId || (currentStore.employees[0]?.id || ''),
         client: payload.client || '',
         priority: payload.priority || 'medium',
-        status: payload.status || 'todo',
+        stage,
+        status: stageToLegacyStatus(stage),
         dueDate: payload.dueDate || getLocalISODate(),
         dueTime: payload.dueTime || '18:00',
-        completed: !!payload.completed,
-        completedAt: payload.completed ? new Date().toISOString() : null,
-        createdAt: new Date().toISOString()
-      };
+        completed: isDelivered,
+        completedAt: isDelivered ? new Date().toISOString() : null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
       currentStore.tasks.unshift(newTask);
       writeStore(currentStore);
       syncTaskToCloud(newTask);
@@ -630,13 +750,42 @@ function handleClientAction(action, senderWs) {
     case 'UPDATE_TASK': {
       const idx = currentStore.tasks.findIndex(t => t.id === payload.id);
       if (idx !== -1) {
-        currentStore.tasks[idx] = { ...currentStore.tasks[idx], ...payload, updatedAt: new Date().toISOString() };
-        if (payload.completed !== undefined) {
-          currentStore.tasks[idx].completedAt = payload.completed ? new Date().toISOString() : null;
-          if (payload.completed && currentStore.tasks[idx].status !== 'done') {
-            currentStore.tasks[idx].status = 'done';
-          }
+        const prev = currentStore.tasks[idx];
+        const merged = { ...prev, ...payload, updatedAt: new Date().toISOString() };
+        // Keep stage & completed synchronized regardless of which field was updated
+        if (payload.stage !== undefined) {
+          const nextStage = normalizeStage(payload.stage, false);
+          merged.stage = nextStage;
+          merged.completed = nextStage === 'delivered';
+          merged.completedAt = merged.completed ? (prev.completedAt || new Date().toISOString()) : null;
+        } else if (payload.completed !== undefined) {
+          merged.completed = !!payload.completed;
+          merged.stage = merged.completed ? 'delivered' : (prev.stage === 'delivered' ? 'work' : normalizeStage(prev.stage, false));
+          merged.completedAt = merged.completed ? (prev.completedAt || new Date().toISOString()) : null;
         }
+        currentStore.tasks[idx] = normalizeTaskRecord(merged);
+        writeStore(currentStore);
+        syncTaskToCloud(currentStore.tasks[idx]);
+        broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
+        senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
+      }
+      break;
+    }
+
+    case 'SET_TASK_STAGE': {
+      const idx = currentStore.tasks.findIndex(t => t.id === payload.id);
+      if (idx !== -1) {
+        const prev = currentStore.tasks[idx];
+        const nextStage = normalizeStage(payload.stage, false);
+        const isDelivered = nextStage === 'delivered';
+        currentStore.tasks[idx] = normalizeTaskRecord({
+          ...prev,
+          stage: nextStage,
+          status: stageToLegacyStatus(nextStage),
+          completed: isDelivered,
+          completedAt: isDelivered ? (prev.completedAt || new Date().toISOString()) : null,
+          updatedAt: new Date().toISOString()
+        });
         writeStore(currentStore);
         syncTaskToCloud(currentStore.tasks[idx]);
         broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
@@ -658,10 +807,17 @@ function handleClientAction(action, senderWs) {
     case 'TOGGLE_TASK_STATUS': {
       const idx = currentStore.tasks.findIndex(t => t.id === payload.id);
       if (idx !== -1) {
-        const isDone = !currentStore.tasks[idx].completed;
-        currentStore.tasks[idx].completed = isDone;
-        currentStore.tasks[idx].status = isDone ? 'done' : (payload.newStatus || 'todo');
-        currentStore.tasks[idx].completedAt = isDone ? new Date().toISOString() : null;
+        const prev = currentStore.tasks[idx];
+        const isDone = !prev.completed;
+        const nextStage = isDone ? 'delivered' : normalizeStage(payload.newStage || payload.newStatus || 'work', false);
+        currentStore.tasks[idx] = normalizeTaskRecord({
+          ...prev,
+          completed: isDone,
+          stage: nextStage,
+          status: stageToLegacyStatus(nextStage),
+          completedAt: isDone ? new Date().toISOString() : null,
+          updatedAt: new Date().toISOString()
+        });
         writeStore(currentStore);
         syncTaskToCloud(currentStore.tasks[idx]);
         broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
@@ -869,3 +1025,19 @@ server.listen(PORT, '0.0.0.0', () => {
   }
   console.log(`======================================================\n`);
 });
+
+export function stopServer() {
+  return new Promise((resolve) => {
+    try {
+      wss.clients.forEach((client) => {
+        try { client.terminate(); } catch (e) {}
+      });
+      wss.close(() => {
+        server.close(() => resolve());
+      });
+      setTimeout(resolve, 400);
+    } catch (e) {
+      resolve();
+    }
+  });
+}

@@ -12,6 +12,9 @@ build/
 .env
 .env.local
 *.log
+*.err
+*.dmg
+*.exe
 
 # Windows specific
 Thumbs.db

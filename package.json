@@ -1,6 +1,6 @@
 {
   "name": "team-to-do",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Apple Reminders Style Real-time Desktop Team Task & Calendar Widget for Mac & Windows",
   "main": "electron-main.js",
   "type": "module",
@@ -23,9 +23,14 @@
     "files": [
       "server.js",
       "electron-main.js",
+      "updater.js",
       "preload.cjs",
       "public/**/*",
       "data/**/*",
+      "!data/*.err",
+      "!data/*.log",
+      "!data/bounds.json",
+      "!data/store.json",
       "icon.ico",
       "icon_512.png",
       "icon.png",
@@ -34,9 +39,17 @@
       "app.icns",
       "package.json"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "yahiabinzaman",
+        "repo": "team-to-do"
+      }
+    ],
     "mac": {
       "icon": "app.icns",
       "identity": null,
+      "artifactName": "Team-To-Do-${version}-${arch}.${ext}",
       "extendInfo": {
         "LSUIElement": true
       },
@@ -50,9 +63,18 @@
     "win": {
       "icon": "icon.ico",
       "target": [
-        "nsis",
-        "portable",
-        "zip"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -60,12 +82,17 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Team To do"
+      "shortcutName": "Team To do",
+      "artifactName": "Team-To-Do-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Team-To-Do-Portable-${version}.${ext}"
     }
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "cors": "^2.8.5",
+    "electron-updater": "^6.8.11",
     "express": "^4.19.2",
     "ws": "^8.17.0"
   },
