@@ -10,6 +10,7 @@ function getLocalISODate(d = new Date()) {
 const STAGES = [
   { id: 'ordered', label: 'Ordered', shortLabel: 'Ordered', menuLabel: 'Ordered', sectionTitle: 'Ordered' },
   { id: 'work', label: 'Needs Work', shortLabel: 'Needs Work', menuLabel: 'Needs Work', sectionTitle: 'Needs Work' },
+  { id: 'review', label: 'In Review', shortLabel: 'In Review', menuLabel: 'In Review', sectionTitle: 'In Review' },
   { id: 'printing', label: 'Printing', shortLabel: 'Printing', menuLabel: 'In Printing', sectionTitle: 'In Printing' },
   { id: 'delivered', label: 'Delivered', shortLabel: 'Delivered', menuLabel: 'Delivered', sectionTitle: 'Delivered' }
 ];
@@ -19,6 +20,7 @@ const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.id, s]));
 const STAGE_ICONS = {
   ordered: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
   work: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+  review: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
   printing: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>`,
   delivered: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
 };
@@ -28,6 +30,7 @@ function normalizeClientStage(rawStage, completed = false) {
     const s = rawStage.trim().toLowerCase();
     if (s === 'ordered' || s === 'order') return 'ordered';
     if (s === 'work' || s === 'todo' || s === 'needs_work' || s === 'pending') return 'work';
+    if (s === 'review' || s === 'in_review' || s === 'in review' || s === 'client_review' || s === 'sent_to_client') return 'review';
     if (s === 'printing' || s === 'in_printing' || s === 'in_progress' || s === 'print') return 'printing';
     if (s === 'delivered' || s === 'done' || s === 'completed') return 'delivered';
   }
@@ -57,7 +60,7 @@ const State = {
   schedules: [],
   displayMode: 'tasks', // 'tasks', 'team', 'timeline', 'history'
   filterEmployeeId: null,
-  filterStage: null, // null (all active) | 'ordered' | 'work' | 'printing' | 'delivered'
+  filterStage: null, // null (all active) | 'ordered' | 'work' | 'review' | 'printing' | 'delivered'
   filterCategory: '',
   searchQuery: '',
   groupMode: localStorage.getItem('team_todo_group_mode') || 'stage', // 'stage' | 'date'
@@ -263,7 +266,7 @@ function taskMatchesSearch(task, query) {
 }
 
 function updateStageSummaryUI(baseTasks) {
-  const counts = { ordered: 0, work: 0, printing: 0, delivered: 0 };
+  const counts = { ordered: 0, work: 0, review: 0, printing: 0, delivered: 0 };
   baseTasks.forEach(t => {
     const s = normalizeClientStage(t.stage || t.status, !!t.completed);
     counts[s] = (counts[s] || 0) + 1;
@@ -271,10 +274,12 @@ function updateStageSummaryUI(baseTasks) {
 
   const elOrdered = document.getElementById('stageCountOrdered');
   const elWork = document.getElementById('stageCountWork');
+  const elReview = document.getElementById('stageCountReview');
   const elPrinting = document.getElementById('stageCountPrinting');
   const elDelivered = document.getElementById('stageCountDelivered');
   if (elOrdered) elOrdered.textContent = counts.ordered;
   if (elWork) elWork.textContent = counts.work;
+  if (elReview) elReview.textContent = counts.review;
   if (elPrinting) elPrinting.textContent = counts.printing;
   if (elDelivered) elDelivered.textContent = counts.delivered;
 
@@ -458,7 +463,7 @@ function renderTasksView() {
       </div>
     `;
   } else if (State.groupMode === 'stage') {
-    const activeStages = ['ordered', 'work', 'printing'];
+    const activeStages = ['ordered', 'work', 'review', 'printing'];
     activeStages.forEach(stageId => {
       const stageTasks = visibleTasks.filter(t => t.stage === stageId);
       if (stageTasks.length > 0) {
@@ -608,7 +613,7 @@ function positionPopoverFallback(popover, trigger) {
   const rect = trigger.getBoundingClientRect();
   const menuRect = popover.getBoundingClientRect();
   const w = menuRect.width || 142;
-  const h = menuRect.height || 136;
+  const h = menuRect.height || 168;
 
   let left = rect.left;
   if (left + w > window.innerWidth - 8) {
@@ -625,6 +630,13 @@ function positionPopoverFallback(popover, trigger) {
 function selectStageFromPopover(stage) {
   const taskId = State.popoverTaskId;
   const popover = document.getElementById('stagePopover');
+  const activeEl = document.activeElement;
+  const restoreKeyboardFocus = !!(
+    popover &&
+    activeEl &&
+    popover.contains(activeEl) &&
+    activeEl.matches(':focus-visible')
+  );
   if (popover && popover.matches(':popover-open')) {
     popover.hidePopover();
   }
@@ -644,6 +656,10 @@ function selectStageFromPopover(stage) {
     }
     renderWidget();
     sendAction('SET_TASK_STAGE', { id: taskId, stage: nextStage });
+  }
+  if (restoreKeyboardFocus) {
+    const escapedId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(taskId) : taskId;
+    document.querySelector(`#item-${escapedId} .stage-badge`)?.focus({ preventScroll: true });
   }
 }
 
@@ -1350,6 +1366,7 @@ function readNotifyFormPayload() {
     whatsappPhone: document.getElementById('notifyWaPhoneInput')?.value.trim() || '',
     whatsappApiKey: document.getElementById('notifyWaKeyInput')?.value.trim() || '',
     telegramEnabled: !!document.getElementById('notifyTgEnabledCheck')?.checked,
+    telegramRealtime: !!document.getElementById('notifyTgRealtimeCheck')?.checked,
     telegramBotToken: document.getElementById('notifyTgTokenInput')?.value.trim() || '',
     telegramChatId: document.getElementById('notifyTgChatIdInput')?.value.trim() || '',
     webhookUrl: document.getElementById('notifyWebhookInput')?.value.trim() || ''
@@ -1396,6 +1413,8 @@ async function loadNotifyConfig() {
 
     const tgCheck = document.getElementById('notifyTgEnabledCheck');
     if (tgCheck) tgCheck.checked = !!c.telegramEnabled;
+    const tgRtCheck = document.getElementById('notifyTgRealtimeCheck');
+    if (tgRtCheck) tgRtCheck.checked = c.telegramRealtime !== false;
     const tgToken = document.getElementById('notifyTgTokenInput');
     if (tgToken) {
       tgToken.value = '';

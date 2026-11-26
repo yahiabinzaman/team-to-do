@@ -15,7 +15,8 @@ import {
   dispatchDigest,
   detectTelegramChatId,
   startNotifyScheduler,
-  startTelegramCommandListener
+  startTelegramCommandListener,
+  createRealtimeTelegramNotifier
 } from './notifier.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -306,7 +307,7 @@ function pruneOneYearOldTasks(data) {
 }
 
 // Workflow Stages for Keyring / Order & Task Tracking
-const VALID_STAGES = ['ordered', 'work', 'printing', 'delivered'];
+const VALID_STAGES = ['ordered', 'work', 'review', 'printing', 'delivered'];
 const META_PREFIX = '[[TDMETA:';
 const META_SUFFIX = ']]';
 
@@ -315,6 +316,7 @@ function normalizeStage(rawStage, completed = false) {
     const s = rawStage.trim().toLowerCase();
     if (s === 'ordered' || s === 'order') return 'ordered';
     if (s === 'work' || s === 'todo' || s === 'needs_work' || s === 'pending') return 'work';
+    if (s === 'review' || s === 'in_review' || s === 'in review' || s === 'client_review' || s === 'sent_to_client') return 'review';
     if (s === 'printing' || s === 'in_printing' || s === 'in_progress' || s === 'print') return 'printing';
     if (s === 'delivered' || s === 'done' || s === 'completed') return 'delivered';
   }
@@ -324,6 +326,7 @@ function normalizeStage(rawStage, completed = false) {
 function stageToLegacyStatus(stage) {
   switch (stage) {
     case 'ordered': return 'ordered';
+    case 'review': return 'review';
     case 'printing': return 'in_progress';
     case 'delivered': return 'done';
     default: return 'todo';
@@ -579,10 +582,13 @@ async function initSupabaseCloudSync() {
             currentStore.tasks.unshift(newTask);
             writeStore(currentStore);
             broadcast({ type: 'TASK_ADDED', task: newTask });
+            realtimeNotifier.notify({ type: 'added', task: newTask });
           }
         } else if (payload.eventType === 'UPDATE') {
           const updated = supabaseToTask(payload.new);
           const idx = currentStore.tasks.findIndex(t => t.id === updated.id);
+          const prevTask = idx !== -1 ? currentStore.tasks[idx] : null;
+          const isLocalEcho = prevTask && prevTask.stage === updated.stage && prevTask.updatedAt === updated.updatedAt;
           if (idx !== -1) {
             currentStore.tasks[idx] = updated;
           } else {
@@ -590,11 +596,22 @@ async function initSupabaseCloudSync() {
           }
           writeStore(currentStore);
           broadcast({ type: 'TASK_UPDATED', task: updated });
+          if (!isLocalEcho) {
+            if (!prevTask) {
+              realtimeNotifier.notify({ type: 'added', task: updated });
+            } else if (prevTask.stage !== updated.stage) {
+              realtimeNotifier.notify({ type: 'stage', prevStage: prevTask.stage, task: updated });
+            }
+          }
         } else if (payload.eventType === 'DELETE') {
           const delId = payload.old.id;
+          const deletedTask = currentStore.tasks.find(t => t.id === delId);
           currentStore.tasks = currentStore.tasks.filter(t => t.id !== delId);
           writeStore(currentStore);
           broadcast({ type: 'TASK_DELETED', id: delId });
+          if (deletedTask) {
+            realtimeNotifier.notify({ type: 'deleted', task: deletedTask });
+          }
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, (payload) => {
@@ -740,6 +757,11 @@ const stopTelegramListener = startTelegramCommandListener({
   refreshStore: refreshTasksFromCloud
 });
 
+const realtimeNotifier = createRealtimeTelegramNotifier({
+  dataDir: DATA_DIR,
+  getStore: () => currentStore
+});
+
 app.get('/api/network-info', (req, res) => {
   const interfaces = os.networkInterfaces();
   const addresses = [];
@@ -854,6 +876,7 @@ function handleClientAction(action, senderWs) {
       writeStore(currentStore);
       syncTaskToCloud(newTask);
       broadcast({ type: 'TASK_ADDED', task: newTask, clientInfo });
+      realtimeNotifier.notify({ type: 'added', task: newTask });
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: newTask }));
       break;
     }
@@ -878,6 +901,9 @@ function handleClientAction(action, senderWs) {
         writeStore(currentStore);
         syncTaskToCloud(currentStore.tasks[idx]);
         broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
+        if (prev.stage !== currentStore.tasks[idx].stage) {
+          realtimeNotifier.notify({ type: 'stage', prevStage: prev.stage, task: currentStore.tasks[idx] });
+        }
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
       }
       break;
@@ -900,6 +926,9 @@ function handleClientAction(action, senderWs) {
         writeStore(currentStore);
         syncTaskToCloud(currentStore.tasks[idx]);
         broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
+        if (prev.stage !== nextStage) {
+          realtimeNotifier.notify({ type: 'stage', prevStage: prev.stage, task: currentStore.tasks[idx] });
+        }
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
       }
       break;
@@ -911,6 +940,9 @@ function handleClientAction(action, senderWs) {
       writeStore(currentStore);
       deleteTaskFromCloud(payload.id);
       broadcast({ type: 'TASK_DELETED', id: payload.id, task: taskToDelete, clientInfo });
+      if (taskToDelete) {
+        realtimeNotifier.notify({ type: 'deleted', task: taskToDelete });
+      }
       senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: { id: payload.id } }));
       break;
     }
@@ -932,6 +964,9 @@ function handleClientAction(action, senderWs) {
         writeStore(currentStore);
         syncTaskToCloud(currentStore.tasks[idx]);
         broadcast({ type: 'TASK_UPDATED', task: currentStore.tasks[idx], clientInfo });
+        if (prev.stage !== nextStage) {
+          realtimeNotifier.notify({ type: 'stage', prevStage: prev.stage, task: currentStore.tasks[idx] });
+        }
         senderWs.send(JSON.stringify({ type: 'ACTION_CONFIRM', actionId: action.actionId, result: currentStore.tasks[idx] }));
       }
       break;
@@ -1140,6 +1175,7 @@ server.listen(PORT, '0.0.0.0', () => {
 export function stopServer() {
   try { stopNotifyScheduler?.(); } catch (e) {}
   try { stopTelegramListener?.(); } catch (e) {}
+  try { realtimeNotifier?.stop?.(); } catch (e) {}
   return new Promise((resolve) => {
     try {
       wss.clients.forEach((client) => {

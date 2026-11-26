@@ -29,6 +29,10 @@
   --stage-work-bg: rgba(10, 132, 255, 0.16);
   --stage-work-border: rgba(10, 132, 255, 0.38);
 
+  --stage-review-color: #D49CFF;
+  --stage-review-bg: rgba(191, 90, 242, 0.16);
+  --stage-review-border: rgba(191, 90, 242, 0.4);
+
   --stage-printing-color: #FFB84D;
   --stage-printing-bg: rgba(255, 159, 10, 0.16);
   --stage-printing-border: rgba(255, 159, 10, 0.4);
@@ -281,19 +285,19 @@ html, body {
 }
 
 /* =========================================================
-   4-STAGE WORKFLOW SUMMARY TILES
+   5-STAGE WORKFLOW SUMMARY TILES
 ========================================================= */
 .stage-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 5px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3.5px;
   margin-bottom: 7px;
   flex-shrink: 0;
 }
 
 @container (max-width: 265px) {
   .stage-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -301,7 +305,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 6px 6px 5px;
+  padding: 5px 4px 4px;
   border-radius: 10px;
   background: var(--surface-item);
   border: 1px solid var(--widget-border-inner);
@@ -318,11 +322,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 3px;
+  gap: 2px;
 }
 .stage-tile-icon {
-  width: 19px;
-  height: 19px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -330,15 +334,16 @@ html, body {
   flex-shrink: 0;
 }
 .stage-tile-count {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 700;
   line-height: 1;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 .stage-tile-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -352,6 +357,10 @@ html, body {
 .stage-tile.stage-work .stage-tile-icon {
   background: var(--stage-work-bg);
   color: var(--stage-work-color);
+}
+.stage-tile.stage-review .stage-tile-icon {
+  background: var(--stage-review-bg);
+  color: var(--stage-review-color);
 }
 .stage-tile.stage-printing .stage-tile-icon {
   background: var(--stage-printing-bg);
@@ -369,6 +378,10 @@ html, body {
 .stage-tile.stage-work.active {
   background: var(--stage-work-bg);
   border-color: var(--stage-work-border);
+}
+.stage-tile.stage-review.active {
+  background: var(--stage-review-bg);
+  border-color: var(--stage-review-border);
 }
 .stage-tile.stage-printing.active {
   background: var(--stage-printing-bg);
@@ -544,6 +557,7 @@ html, body {
 .task-section-header.overdue { color: var(--apple-red); }
 .task-section-header.stage-hdr-ordered { color: var(--stage-ordered-color); }
 .task-section-header.stage-hdr-work { color: var(--stage-work-color); }
+.task-section-header.stage-hdr-review { color: var(--stage-review-color); }
 .task-section-header.stage-hdr-printing { color: var(--stage-printing-color); }
 .task-section-header.stage-hdr-delivered { color: var(--stage-delivered-color); }
 
@@ -682,6 +696,11 @@ html, body {
   color: var(--stage-work-color);
   border-color: var(--stage-work-border);
 }
+.stage-badge.stage-review {
+  background: var(--stage-review-bg);
+  color: var(--stage-review-color);
+  border-color: var(--stage-review-border);
+}
 .stage-badge.stage-printing {
   background: var(--stage-printing-bg);
   color: var(--stage-printing-color);
@@ -796,7 +815,8 @@ html, body {
   }
 }
 
-.stage-popover-menu {
+.stage-popover-menu,
+.stage-popover-group {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -806,7 +826,8 @@ html, body {
   align-items: center;
   gap: 7px;
   width: 100%;
-  padding: 6px 8px;
+  min-block-size: 26px;
+  padding: 5px 8px;
   border: none;
   border-radius: 7px;
   background: transparent;
@@ -847,6 +868,8 @@ html, body {
 .stage-menu-item.stage-ordered[aria-checked="true"]::before { color: var(--stage-ordered-color); }
 .stage-menu-item.stage-work .stage-menu-icon,
 .stage-menu-item.stage-work[aria-checked="true"]::before { color: var(--stage-work-color); }
+.stage-menu-item.stage-review .stage-menu-icon,
+.stage-menu-item.stage-review[aria-checked="true"]::before { color: var(--stage-review-color); }
 .stage-menu-item.stage-printing .stage-menu-icon,
 .stage-menu-item.stage-printing[aria-checked="true"]::before { color: var(--stage-printing-color); }
 .stage-menu-item.stage-delivered .stage-menu-icon,
@@ -1055,6 +1078,7 @@ html, body {
 }
 .cal-event-chip.stage-chip-ordered { border-left-color: var(--stage-ordered-color); }
 .cal-event-chip.stage-chip-work { border-left-color: var(--stage-work-color); }
+.cal-event-chip.stage-chip-review { border-left-color: var(--stage-review-color); }
 .cal-event-chip.stage-chip-printing { border-left-color: var(--stage-printing-color); }
 
 /* =========================================================
@@ -1373,16 +1397,18 @@ dialog.apple-dialog::backdrop {
 
 /* Modal Stage Picker Grid */
 .stage-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 .stage-pick-btn {
+  flex: 1 1 calc(33.333% - 4px);
+  min-block-size: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 5px 3px;
+  padding: 5px 6px;
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1406,6 +1432,7 @@ dialog.apple-dialog::backdrop {
 }
 .stage-pick-btn.stage-ordered .stage-pick-dot { background: var(--stage-ordered-color); }
 .stage-pick-btn.stage-work .stage-pick-dot { background: var(--stage-work-color); }
+.stage-pick-btn.stage-review .stage-pick-dot { background: var(--stage-review-color); }
 .stage-pick-btn.stage-printing .stage-pick-dot { background: var(--stage-printing-color); }
 .stage-pick-btn.stage-delivered .stage-pick-dot { background: var(--stage-delivered-color); }
 
@@ -1418,6 +1445,11 @@ dialog.apple-dialog::backdrop {
   background: var(--stage-work-bg);
   border-color: var(--stage-work-border);
   color: var(--stage-work-color);
+}
+.stage-pick-btn.stage-review.active {
+  background: var(--stage-review-bg);
+  border-color: var(--stage-review-border);
+  color: var(--stage-review-color);
 }
 .stage-pick-btn.stage-printing.active {
   background: var(--stage-printing-bg);
@@ -1692,6 +1724,10 @@ dialog.apple-dialog::backdrop {
 .apple-switch:checked::after {
   transform: translateX(12px);
 }
+.apple-switch:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 2px;
+}
 .notify-hint {
   font-size: 9.5px;
   line-height: 1.35;
@@ -1791,6 +1827,10 @@ dialog.apple-dialog::backdrop {
   --stage-work-color: #1B4D7E;
   --stage-work-bg: #EBF5FB;
   --stage-work-border: rgba(35, 131, 226, 0.3);
+
+  --stage-review-color: #6B21A8;
+  --stage-review-bg: #F3E8FF;
+  --stage-review-border: rgba(147, 51, 234, 0.3);
 
   --stage-printing-color: #92400E;
   --stage-printing-bg: #FEF3C7;
@@ -1924,6 +1964,7 @@ dialog.apple-dialog::backdrop {
 }
 [data-theme="notion"] .cal-event-chip.stage-chip-ordered { border-left-color: var(--stage-ordered-color); }
 [data-theme="notion"] .cal-event-chip.stage-chip-work { border-left-color: var(--stage-work-color); }
+[data-theme="notion"] .cal-event-chip.stage-chip-review { border-left-color: var(--stage-review-color); }
 [data-theme="notion"] .cal-event-chip.stage-chip-printing { border-left-color: var(--stage-printing-color); }
 
 [data-theme="notion"] dialog.apple-dialog {

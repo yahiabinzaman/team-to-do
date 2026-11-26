@@ -38,6 +38,7 @@ export function defaultNotifyConfig() {
     whatsappPhone: '',
     whatsappApiKey: '',
     telegramEnabled: false,
+    telegramRealtime: true,
     telegramBotToken: '',
     telegramChatId: '',
     lastTelegramUpdateId: 0,
@@ -89,6 +90,7 @@ export function maskNotifyConfig(cfg) {
     whatsappApiKey: '',
     hasWhatsappApiKey: Boolean(cfg.whatsappApiKey),
     telegramEnabled: !!cfg.telegramEnabled,
+    telegramRealtime: cfg.telegramRealtime !== false,
     telegramBotToken: '',
     hasTelegramBotToken: Boolean(cfg.telegramBotToken),
     telegramChatId: cfg.telegramChatId || '',
@@ -115,6 +117,7 @@ export function mergeNotifyConfig(existing, incoming = {}) {
       : (incoming.whatsappProvider === 'textmebot' ? 'textmebot' : (existing.whatsappProvider || 'textmebot')),
     whatsappPhone: incoming.whatsappPhone !== undefined ? String(incoming.whatsappPhone).trim() : existing.whatsappPhone,
     telegramEnabled: incoming.telegramEnabled !== undefined ? !!incoming.telegramEnabled : existing.telegramEnabled,
+    telegramRealtime: incoming.telegramRealtime !== undefined ? !!incoming.telegramRealtime : (existing.telegramRealtime !== false),
     telegramChatId: incoming.telegramChatId !== undefined ? String(incoming.telegramChatId).trim() : existing.telegramChatId,
     webhookUrl: incoming.webhookUrl !== undefined ? String(incoming.webhookUrl).trim() : existing.webhookUrl
   };
@@ -165,10 +168,12 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
   const active = tasks.filter(t => !t.completed && t.stage !== 'delivered');
   const keyringsActive = active.filter(isKeyringTask);
   const keyringPendingWork = keyringsActive.filter(t => t.stage === 'work' || t.stage === 'ordered');
+  const keyringReview = keyringsActive.filter(t => t.stage === 'review');
   const keyringPrinting = keyringsActive.filter(t => t.stage === 'printing');
 
   const orderedAll = active.filter(t => t.stage === 'ordered');
   const workAll = active.filter(t => t.stage === 'work');
+  const reviewAll = active.filter(t => t.stage === 'review');
   const printingAll = active.filter(t => t.stage === 'printing');
 
   const dateLabel = new Date().toLocaleDateString('en-US', {
@@ -181,7 +186,7 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
 
   const lines = [
     `🔑 Team To do — ${dateLabel}`,
-    `Keyring Work Pending: ${keyringPendingWork.length} | Keyring Printing: ${keyringPrinting.length}`,
+    `Keyring Pending: ${keyringPendingWork.length} | In Review: ${keyringReview.length} | Printing: ${keyringPrinting.length}`,
     ''
   ];
 
@@ -194,6 +199,12 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
     lines.push('');
   }
 
+  if (keyringReview.length > 0) {
+    lines.push(`👀 Keyring In Review (${keyringReview.length}):`);
+    keyringReview.forEach(t => lines.push(formatLineItem(t, empMap)));
+    lines.push('');
+  }
+
   if (keyringPrinting.length > 0) {
     lines.push(`🖨️ Keyring Printing (${keyringPrinting.length}):`);
     keyringPrinting.forEach(t => lines.push(formatLineItem(t, empMap)));
@@ -201,6 +212,12 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
   }
 
   if (scope !== 'keyring_only') {
+    const nonKeyringReview = reviewAll.filter(t => !isKeyringTask(t));
+    if (nonKeyringReview.length > 0) {
+      lines.push(`👀 Other In Review (${nonKeyringReview.length}):`);
+      nonKeyringReview.forEach(t => lines.push(formatLineItem(t, empMap)));
+      lines.push('');
+    }
     const nonKeyringPrinting = printingAll.filter(t => !isKeyringTask(t));
     if (nonKeyringPrinting.length > 0) {
       lines.push(`🖨️ Other Printing (${nonKeyringPrinting.length}):`);
@@ -212,7 +229,7 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
       orderedAll.forEach(t => lines.push(formatLineItem(t, empMap)));
       lines.push('');
     }
-    lines.push(`📊 Total Active: ${active.length} (Ordered: ${orderedAll.length}, Needs Work: ${workAll.length}, Printing: ${printingAll.length})`);
+    lines.push(`📊 Total Active: ${active.length} (Ordered: ${orderedAll.length}, Needs Work: ${workAll.length}, In Review: ${reviewAll.length}, Printing: ${printingAll.length})`);
   }
 
   const renderHtmlList = (items, emptyMsg) => {
@@ -230,6 +247,7 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
     </ul>`;
   };
 
+  const otherReview = reviewAll.filter(t => !isKeyringTask(t));
   const otherPrinting = printingAll.filter(t => !isKeyringTask(t));
   const otherWork = workAll.filter(t => !isKeyringTask(t));
 
@@ -241,6 +259,10 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
         <div style="flex:1;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 12px;">
           <div style="font-size:20px;font-weight:700;color:#1D4ED8;">${keyringPendingWork.length}</div>
           <div style="font-size:11px;font-weight:600;color:#1E40AF;">Keyring Pending</div>
+        </div>
+        <div style="flex:1;background:#F3E8FF;border:1px solid #E9D5FF;border-radius:10px;padding:10px 12px;">
+          <div style="font-size:20px;font-weight:700;color:#6B21A8;">${reviewAll.length}</div>
+          <div style="font-size:11px;font-weight:600;color:#6B21A8;">In Review</div>
         </div>
         <div style="flex:1;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:10px 12px;">
           <div style="font-size:20px;font-weight:700;color:#B45309;">${printingAll.length}</div>
@@ -255,7 +277,11 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
       <h3 style="margin:14px 0 4px;font-size:14px;color:#1D4ED8;">Keyring — Needs Work / Ordered (${keyringPendingWork.length})</h3>
       ${renderHtmlList(keyringPendingWork, 'No pending Keyring work right now.')}
 
+      ${keyringReview.length ? `<h3 style="margin:16px 0 4px;font-size:14px;color:#6B21A8;">Keyring — In Review (${keyringReview.length})</h3>${renderHtmlList(keyringReview, '')}` : ''}
+
       ${keyringPrinting.length ? `<h3 style="margin:16px 0 4px;font-size:14px;color:#B45309;">Keyring — In Printing (${keyringPrinting.length})</h3>${renderHtmlList(keyringPrinting, '')}` : ''}
+
+      ${scope !== 'keyring_only' && otherReview.length ? `<h3 style="margin:16px 0 4px;font-size:14px;color:#6B21A8;">Other Orders in Review (${otherReview.length})</h3>${renderHtmlList(otherReview, '')}` : ''}
 
       ${scope !== 'keyring_only' && otherPrinting.length ? `<h3 style="margin:16px 0 4px;font-size:14px;color:#B45309;">Other Orders in Printing (${otherPrinting.length})</h3>${renderHtmlList(otherPrinting, '')}` : ''}
 
@@ -273,9 +299,11 @@ export function buildOrderDigest(store, scope = 'keyring_and_active') {
     counts: {
       active: active.length,
       keyringPending: keyringPendingWork.length,
+      keyringReview: keyringReview.length,
       keyringPrinting: keyringPrinting.length,
       ordered: orderedAll.length,
       work: workAll.length,
+      review: reviewAll.length,
       printing: printingAll.length
     }
   };
@@ -367,7 +395,8 @@ export async function detectTelegramChatId(botToken) {
 const TELEGRAM_KEYBOARD = {
   keyboard: [
     [{ text: '🔑 Keyring' }, { text: '📊 Full Update' }],
-    [{ text: '🖨️ Printing' }, { text: '📦 Ordered' }, { text: '🛠️ Needs Work' }]
+    [{ text: '🛠️ Needs Work' }, { text: '👀 In Review' }],
+    [{ text: '🖨️ Printing' }, { text: '📦 Ordered' }]
   ],
   resize_keyboard: true
 };
@@ -375,6 +404,7 @@ const TELEGRAM_KEYBOARD = {
 const STAGE_LABELS = {
   ordered: '📦 Ordered',
   work: '🛠️ Needs Work',
+  review: '👀 In Review',
   printing: '🖨️ In Printing',
   delivered: '✅ Delivered'
 };
@@ -408,6 +438,7 @@ export function buildTelegramReply(store, incomingText) {
       'Ask anytime by tapping a button below or typing:',
       '• keyring — Keyring work & printing status',
       '• update — Full active order summary',
+      '• review — Sent to clients (In Review)',
       '• printing — Orders currently in printing',
       '• ordered — Newly ordered items',
       '• work — All pending work',
@@ -420,6 +451,7 @@ export function buildTelegramReply(store, incomingText) {
     const keyrings = active.filter(isKeyringTask);
     const kWork = keyrings.filter(t => t.stage === 'work');
     const kOrdered = keyrings.filter(t => t.stage === 'ordered');
+    const kReview = keyrings.filter(t => t.stage === 'review');
     const kPrinting = keyrings.filter(t => t.stage === 'printing');
     const kDeliveredToday = deliveredToday.filter(isKeyringTask);
 
@@ -427,15 +459,22 @@ export function buildTelegramReply(store, incomingText) {
       `🔑 Keyring Live Status`,
       `• Needs Work: ${kWork.length}`,
       `• Ordered: ${kOrdered.length}`,
+      `• In Review: ${kReview.length}`,
       `• In Printing: ${kPrinting.length}`,
       `• Delivered Today: ${kDeliveredToday.length}`,
       ''
     ];
     if (kWork.length) out.push(`🛠️ Needs Work (${kWork.length}):\n${formatRows(kWork)}\n`);
     if (kOrdered.length) out.push(`📦 Ordered (${kOrdered.length}):\n${formatRows(kOrdered)}\n`);
+    if (kReview.length) out.push(`👀 In Review (${kReview.length}):\n${formatRows(kReview)}\n`);
     if (kPrinting.length) out.push(`🖨️ In Printing (${kPrinting.length}):\n${formatRows(kPrinting)}\n`);
     if (!keyrings.length) out.push('✅ All Keyrings are delivered!');
     return out.join('\n').trim().slice(0, 3900);
+  }
+
+  if (q === '/review' || q === 'review' || q === 'in review' || q === 'in_review' || q.startsWith('👀') || /\bin\s*review\b/.test(q)) {
+    const list = active.filter(t => t.stage === 'review');
+    return `👀 In Review (${list.length}):\n${formatRows(list)}`.slice(0, 3900);
   }
 
   if (q === '/printing' || q === 'printing' || q === 'print' || q.startsWith('🖨️') || /\bprint(ing)?\b/.test(q)) {
@@ -653,6 +692,7 @@ export function startTelegramCommandListener({ dataDir, getStore, refreshStore }
           commands: [
             { command: 'keyring', description: 'Keyring pending work & printing status' },
             { command: 'update', description: 'Full live order summary' },
+            { command: 'review', description: 'Orders sent to clients (In Review)' },
             { command: 'printing', description: 'Orders currently in printing' },
             { command: 'ordered', description: 'Newly ordered items' },
             { command: 'work', description: 'All items needing work' },
@@ -757,4 +797,113 @@ export function startTelegramCommandListener({ dataDir, getStore, refreshStore }
     stopped = true;
     try { activeAbort?.abort(); } catch (e) {}
   };
+}
+
+export function createRealtimeTelegramNotifier({ dataDir, getStore }) {
+  const pending = new Map();
+  const recentFingerprints = new Map();
+  let sendChain = Promise.resolve();
+  let stopped = false;
+
+  const pruneFingerprints = (now) => {
+    for (const [k, ts] of recentFingerprints.entries()) {
+      if (now - ts > 30000) recentFingerprints.delete(k);
+    }
+  };
+
+  const formatMessage = (entry, store) => {
+    const employees = Array.isArray(store?.employees) ? store.employees : [];
+    const empMap = new Map(employees.map(e => [e.id, e.name]));
+    const task = entry.task;
+    const line = formatLineItem(task, empMap);
+    const nextLabel = STAGE_LABELS[task.stage] || '🛠️ Needs Work';
+    const notesLine = task.notes ? `\n📝 ${task.notes}` : '';
+
+    if (entry.type === 'added') {
+      return `🆕 New Order Added\n${line}\nStage: ${nextLabel}${notesLine}`.slice(0, 3900);
+    }
+    if (entry.type === 'deleted') {
+      return `🗑️ Order Deleted\n${line}`.slice(0, 3900);
+    }
+    const prevLabel = STAGE_LABELS[entry.prevStage] || entry.prevStage || 'Previous';
+    return `${nextLabel} (Updated)\n${line}\n${prevLabel} → ${nextLabel}${notesLine}`.slice(0, 3900);
+  };
+
+  const flushTask = (taskId) => {
+    const entry = pending.get(taskId);
+    pending.delete(taskId);
+    if (!entry || stopped) return;
+
+    const cfg = readNotifyConfig(dataDir);
+    if (!cfg.telegramEnabled || cfg.telegramRealtime === false || !cfg.telegramBotToken || !cfg.telegramChatId) {
+      return;
+    }
+    if (cfg.scope === 'keyring_only' && !isKeyringTask(entry.task)) {
+      return;
+    }
+    if (entry.type === 'stage' && entry.prevStage === entry.task?.stage) {
+      return;
+    }
+
+    const text = formatMessage(entry, getStore());
+    sendChain = sendChain
+      .then(() =>
+        sendTelegramMessage({
+          botToken: cfg.telegramBotToken,
+          chatId: cfg.telegramChatId,
+          text,
+          replyMarkup: TELEGRAM_KEYBOARD
+        })
+      )
+      .catch((err) => {
+        console.error('[Notifier] Real-time Telegram send failed:', err?.message || err);
+      });
+  };
+
+  const notify = ({ type, task, prevStage } = {}) => {
+    if (stopped || !task || !task.id) return;
+    const cfg = readNotifyConfig(dataDir);
+    if (!cfg.telegramEnabled || cfg.telegramRealtime === false || !cfg.telegramBotToken || !cfg.telegramChatId) {
+      return;
+    }
+
+    const now = Date.now();
+    pruneFingerprints(now);
+    const fp = `${type}:${task.id}:${task.stage || ''}:${task.updatedAt || ''}`;
+    if (recentFingerprints.has(fp)) return;
+    recentFingerprints.set(fp, now);
+
+    const existing = pending.get(task.id);
+    if (existing) {
+      clearTimeout(existing.timer);
+      if (existing.type === 'added' && type === 'deleted') {
+        pending.delete(task.id);
+        return;
+      }
+      const nextType = (existing.type === 'added' && type === 'stage') ? 'added' : type;
+      const initialPrev = existing.prevStage !== undefined ? existing.prevStage : prevStage;
+      existing.type = nextType;
+      existing.prevStage = initialPrev;
+      existing.task = { ...task };
+      existing.timer = setTimeout(() => flushTask(task.id), 1500);
+    } else {
+      const timer = setTimeout(() => flushTask(task.id), 1500);
+      pending.set(task.id, {
+        type,
+        prevStage,
+        task: { ...task },
+        timer
+      });
+    }
+  };
+
+  const stop = () => {
+    stopped = true;
+    for (const entry of pending.values()) {
+      clearTimeout(entry.timer);
+    }
+    pending.clear();
+  };
+
+  return { notify, stop };
 }

@@ -55,7 +55,7 @@
           <button type="button" class="clear-filter-btn" onclick="clearMemberFilter()">Show All</button>
         </div>
 
-        <!-- 4-Stage Summary Tiles (Apple Reminders Style) -->
+        <!-- 5-Stage Summary Tiles (Apple Reminders Style) -->
         <div class="stage-summary-grid" id="stageSummaryGrid" role="group" aria-label="Filter by order stage">
           <button type="button" class="stage-tile stage-ordered" data-stage="ordered" aria-pressed="false" onclick="toggleStageFilter('ordered')" title="Orders received (Order Holo)">
             <div class="stage-tile-top">
@@ -75,6 +75,16 @@
               <span class="stage-tile-count" id="stageCountWork">0</span>
             </div>
             <span class="stage-tile-label">To Do</span>
+          </button>
+
+          <button type="button" class="stage-tile stage-review" data-stage="review" aria-pressed="false" onclick="toggleStageFilter('review')" title="Sent to client for review (Clients ke pathano hoiche)">
+            <div class="stage-tile-top">
+              <span class="stage-tile-icon" aria-hidden="true">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span class="stage-tile-count" id="stageCountReview">0</span>
+            </div>
+            <span class="stage-tile-label">In Review</span>
           </button>
 
           <button type="button" class="stage-tile stage-printing" data-stage="printing" aria-pressed="false" onclick="toggleStageFilter('printing')" title="Currently in printing">
@@ -165,31 +175,39 @@
 
   <!-- ================= QUICK STAGE SWITCHER POPOVER ================= -->
   <div id="stagePopover" class="stage-popover" popover="auto">
-    <div focusgroup="menu nomemory" class="stage-popover-menu" role="group" aria-label="Order Stage">
-      <button type="button" class="stage-menu-item stage-ordered" data-stage="ordered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('ordered')">
-        <span class="stage-menu-icon" aria-hidden="true">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-        </span>
-        <span class="stage-menu-text">Ordered</span>
-      </button>
-      <button type="button" class="stage-menu-item stage-work" data-stage="work" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('work')">
-        <span class="stage-menu-icon" aria-hidden="true">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </span>
-        <span class="stage-menu-text">Needs Work</span>
-      </button>
-      <button type="button" class="stage-menu-item stage-printing" data-stage="printing" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('printing')">
-        <span class="stage-menu-icon" aria-hidden="true">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-        </span>
-        <span class="stage-menu-text">In Printing</span>
-      </button>
-      <button type="button" class="stage-menu-item stage-delivered" data-stage="delivered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('delivered')">
-        <span class="stage-menu-icon" aria-hidden="true">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </span>
-        <span class="stage-menu-text">Delivered</span>
-      </button>
+    <div focusgroup="menu nomemory" class="stage-popover-menu" aria-label="Order Stage">
+      <div role="group" aria-label="Order Stage" class="stage-popover-group">
+        <button type="button" class="stage-menu-item stage-ordered" data-stage="ordered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('ordered')">
+          <span class="stage-menu-icon" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+          </span>
+          <span class="stage-menu-text">Ordered</span>
+        </button>
+        <button type="button" class="stage-menu-item stage-work" data-stage="work" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('work')">
+          <span class="stage-menu-icon" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <span class="stage-menu-text">Needs Work</span>
+        </button>
+        <button type="button" class="stage-menu-item stage-review" data-stage="review" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('review')">
+          <span class="stage-menu-icon" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+          <span class="stage-menu-text">In Review</span>
+        </button>
+        <button type="button" class="stage-menu-item stage-printing" data-stage="printing" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('printing')">
+          <span class="stage-menu-icon" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          </span>
+          <span class="stage-menu-text">In Printing</span>
+        </button>
+        <button type="button" class="stage-menu-item stage-delivered" data-stage="delivered" role="menuitemradio" aria-checked="false" onclick="selectStageFromPopover('delivered')">
+          <span class="stage-menu-icon" aria-hidden="true">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </span>
+          <span class="stage-menu-text">Delivered</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -226,6 +244,10 @@
           <button type="button" class="stage-pick-btn stage-work active" data-stage="work" aria-checked="true" onclick="selectModalStage('work')">
             <span class="stage-pick-dot" aria-hidden="true"></span>
             <span>To Do</span>
+          </button>
+          <button type="button" class="stage-pick-btn stage-review" data-stage="review" aria-checked="false" onclick="selectModalStage('review')">
+            <span class="stage-pick-dot" aria-hidden="true"></span>
+            <span>In Review</span>
           </button>
           <button type="button" class="stage-pick-btn stage-printing" data-stage="printing" aria-checked="false" onclick="selectModalStage('printing')">
             <span class="stage-pick-dot" aria-hidden="true"></span>
@@ -368,7 +390,7 @@
       <div style="border-top:1px solid var(--widget-border-inner); padding-top:10px; margin-top:4px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.3</div>
+            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); letter-spacing:-0.2px;">Team To do v1.3.1</div>
             <div style="font-size:10px; color:var(--text-tertiary); margin-top:1px;">By Yahia Bin Zaman</div>
           </div>
           <a href="https://github.com/yahiabinzaman/team-to-do" target="_blank" rel="noopener noreferrer" style="font-size:10.5px; font-weight:500; color:var(--apple-blue); text-decoration:none; padding:3px 8px; border-radius:6px; background:rgba(10,132,255,0.12); border:1px solid rgba(10,132,255,0.2);">
@@ -404,7 +426,11 @@
       <div class="notify-card">
         <label class="notify-toggle-row" for="notifyTgEnabledCheck">
           <span>Telegram Bot (Free Forever)</span>
-          <input type="checkbox" class="apple-switch" id="notifyTgEnabledCheck">
+          <input type="checkbox" switch class="apple-switch" id="notifyTgEnabledCheck">
+        </label>
+        <label class="notify-toggle-row" for="notifyTgRealtimeCheck" style="margin-top:2px;">
+          <span>Real-Time Order Alerts</span>
+          <input type="checkbox" switch class="apple-switch" id="notifyTgRealtimeCheck" checked>
         </label>
         <div class="form-group">
           <label class="form-label" for="notifyTgTokenInput">Bot Token (from @BotFather)</label>
